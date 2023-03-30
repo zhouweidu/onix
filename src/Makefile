@@ -23,7 +23,7 @@ $(BUILD)/boot/%.bin: $(SRC)/boot/%.asm
 
 $(BUILD)/kernel/%.o: $(SRC)/kernel/%.asm
 	$(shell mkdir -p $(dir $@))
-	nasm -f elf32 $(DEBUG) $< -o $@
+	nasm -f elf32 -gdwarf $< -o $@
 
 $(BUILD)/kernel/%.o: $(SRC)/kernel/%.c
 	$(shell mkdir -p $(dir $@))
@@ -56,23 +56,23 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 test: $(BUILD)/master.img
 
 
-.PHONY:clean
+.PHONY: clean
 clean:
 	rm -rf $(BUILD)
 
-.PHONY:bochs
+.PHONY: bochs
 bochs: $(BUILD)/master.img
 	bochs -q
 
 
-.PHONY:qemu
+.PHONY: qemu
 qemu: $(BUILD)/master.img
 	qemu-system-i386 \
 	-m 32M \
 	-boot c \
 	-hda $<
 
-.PHONY:qemug
+.PHONY: qemug
 qemug: $(BUILD)/master.img
 	qemu-system-i386 \
 	-s -S \
@@ -83,5 +83,5 @@ qemug: $(BUILD)/master.img
 $(BUILD)/master.vmdk: $(BUILD)/master.img
 	qemu-img convert -sO vmdk $< $@
 
-.PHONY:vmdk
+.PHONY: vmdk
 vmdk: $(BUILD)/master.vmdk
