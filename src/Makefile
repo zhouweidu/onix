@@ -56,10 +56,32 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 test: $(BUILD)/master.img
 
 
-.PHONY: clean
+.PHONY:clean
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: bochs
+.PHONY:bochs
 bochs: $(BUILD)/master.img
 	bochs -q
+
+
+.PHONY:qemu
+qemu: $(BUILD)/master.img
+	qemu-system-i386 \
+	-m 32M \
+	-boot c \
+	-hda $<
+
+.PHONY:qemug
+qemug: $(BUILD)/master.img
+	qemu-system-i386 \
+	-s -S \
+	-m 32M \
+	-boot c \
+	-drive file=$<,format=raw 
+
+$(BUILD)/master.vmdk: $(BUILD)/master.img
+	qemu-img convert -sO vmdk $< $@
+
+.PHONY:vmdk
+vmdk: $(BUILD)/master.vmdk
