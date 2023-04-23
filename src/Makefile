@@ -21,17 +21,21 @@ $(BUILD)/boot/%.bin: $(SRC)/boot/%.asm
 	$(shell mkdir -p $(dir $@))
 	nasm -f bin $< -o $@
 
-$(BUILD)/kernel/%.o: $(SRC)/kernel/%.asm
+$(BUILD)/%.o: $(SRC)/%.asm
 	$(shell mkdir -p $(dir $@))
 	nasm -f elf32 -gdwarf $< -o $@
 
-$(BUILD)/kernel/%.o: $(SRC)/kernel/%.c
+$(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
 	gcc $(CFLAGS) $(DEBUG) $(INCLUDE) -c $< -o $@
 
 
-$(BUILD)/kernel.bin: $(BUILD)/kernel/start.o \
-	$(BUILD)/kernel/main.o
+$(BUILD)/kernel.bin: \
+	$(BUILD)/kernel/start.o \
+	$(BUILD)/kernel/main.o \
+	$(BUILD)/kernel/io.o \
+	$(BUILD)/kernel/console.o \
+	$(BUILD)/lib/string.o \
 
 	$(shell mkdir -p $(dir $@))
 	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)
@@ -60,6 +64,7 @@ test: $(BUILD)/master.img
 clean:
 	rm -rf $(BUILD)
 
+# 不要使用bochs，环境没配好
 .PHONY: bochs
 bochs: $(BUILD)/master.img
 	bochs -q
@@ -70,7 +75,7 @@ qemu: $(BUILD)/master.img
 	qemu-system-i386 \
 	-m 32M \
 	-boot c \
-	-hda $<
+	-drive file=$<,format=raw
 
 .PHONY: qemug
 qemug: $(BUILD)/master.img
@@ -78,7 +83,7 @@ qemug: $(BUILD)/master.img
 	-s -S \
 	-m 32M \
 	-boot c \
-	-drive file=$<,format=raw 
+	-drive file=$<,format=raw
 
 $(BUILD)/master.vmdk: $(BUILD)/master.img
 	qemu-img convert -sO vmdk $< $@

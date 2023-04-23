@@ -1,8 +1,9 @@
 #include <stdio.h>
 
-char message[]="hello world!\n";
+char message[] = "hello world!\n";
 char buf[1024];
-int main(){
+int main()
+{
     printf(message);
     return 0;
 }

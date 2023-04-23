@@ -1,7 +1,6 @@
 #include <onix/types.h>
 #include <stdio.h>
 
-
 typedef struct descriptor /* 共 8 个字节 */
 {
     unsigned short limit_low;      // 段界限 0 ~ 15 位
@@ -18,11 +17,12 @@ typedef struct descriptor /* 共 8 个字节 */
     unsigned char base_high;       // 基地址 24 ~ 31 位
 } _packed descriptor;
 
-int main(){
-    printf("size of u8 %d\n",sizeof(u8));
-    printf("size of u16 %d\n",sizeof(u16));
-    printf("size of u32 %d\n",sizeof(u32));
-    printf("size of u64 %d\n",sizeof(u64));
-    printf("size of descriptor %d\n",sizeof(descriptor));
+int main()
+{
+    printf("size of u8 %d\n", sizeof(u8));
+    printf("size of u16 %d\n", sizeof(u16));
+    printf("size of u32 %d\n", sizeof(u32));
+    printf("size of u64 %d\n", sizeof(u64));
+    printf("size of descriptor %d\n", sizeof(descriptor));
     return 0;
 }
