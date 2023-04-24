@@ -114,7 +114,7 @@ static void scroll_up()
     }
     else
     {
-        memcpy(MEM_BASE, screen, SCR_SIZE);
+        memcpy((void *)MEM_BASE, (void *)screen, SCR_SIZE);
         pos -= (screen - MEM_BASE);
         screen = MEM_BASE;
     }
@@ -150,7 +150,6 @@ static void command_del()
 void console_write(char *buf, u32 count)
 {
     char ch;
-    char *ptr = (char *)pos;
     while (count--)
     {
         ch = *buf++;
@@ -189,9 +188,10 @@ void console_write(char *buf, u32 count)
                 command_lf();
             }
 
-            *ptr++ = ch;
-            *ptr++ = attr;
-            pos += 2;
+            *((char *)pos) = ch;
+            pos++;
+            *((char *)pos) = attr;
+            pos++;
             x++;
             break;
         }
