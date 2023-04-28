@@ -8,4 +8,7 @@ _start:
     ; bochs的魔术断点可以去掉了，因为用的是qemu
     ; xchg bx, bx
     call kernel_init
+    int 0x80
+    ; mov bx, 0
+    ; div bx
     jmp $

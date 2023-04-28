@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "onix.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "interrupt.h": "c"
     }
 }
