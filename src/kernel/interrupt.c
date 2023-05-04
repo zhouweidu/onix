@@ -2,6 +2,9 @@
 #include <onix/global.h>
 #include <onix/debug.h>
 #include <onix/printk.h>
+#include <onix/stdlib.h>
+#include <onix/io.h>
+#include <onix/assert.h>
 
 #define LOGK(fmt, args...) DEBUGK(fmt, ##args)
 // #define LOGK(fmt, args...)
@@ -44,8 +47,6 @@ static char *messages[] = {
     "#CP Control Protection Exception\0",
 };
 
-u32 counter = 0;
-
 // 通知中断控制器，中断处理结束
 void send_eoi(int vector)
 {
@@ -60,13 +61,49 @@ void send_eoi(int vector)
     }
 }
 
+void set_interrupt_handler(u32 irq, handler_t handler)
+{
+    assert(irq >= 0 && irq < 16);
+    handler_table[IRQ_MASTER_NR + irq] = handler;
+}
+
+void set_interrupt_mask(u32 irq, bool enable)
+{
+    assert(irq >= 0 && irq < 16);
+    u16 port;
+    if (irq < 8)
+    {
+        port = PIC_M_DATA;
+    }
+    else
+    {
+        port = PIC_S_DATA;
+        irq -= 8;
+    }
+    if (enable)
+    {
+        outb(port, inb(port) & ~(1 << irq));
+    }
+    else
+    {
+        outb(port, inb(port) | (1 << irq));
+    }
+}
+
+u32 counter = 0;
+
 void default_handler(int vector)
 {
     send_eoi(vector);
-    DEBUGK("[%d] default interrupt called %d...\n", vector,counter++);
+    DEBUGK("[%x] default interrupt called %d...\n", vector, counter++);
 }
 
-void exception_handler(int vector)
+void exception_handler(
+    int vector,
+    u32 edi, u32 esi, u32 ebp, u32 esp,
+    u32 ebx, u32 edx, u32 ecx, u32 eax,
+    u32 gs, u32 fs, u32 es, u32 ds,
+    u32 vector0, u32 error, u32 eip, u32 cs, u32 eflags)
 {
     char *message = NULL;
     if (vector < 22)
@@ -77,9 +114,18 @@ void exception_handler(int vector)
     {
         message = messages[15];
     }
-    printk("Exception : [0x%02X] %s \n", vector, message);
+
+    printk("\nEXCEPTION : %s \n", messages[vector]);
+    printk("   VECTOR : 0x%02X\n", vector);
+    printk("    ERROR : 0x%08X\n", error);
+    printk("   EFLAGS : 0x%08X\n", eflags);
+    printk("       CS : 0x%02X\n", cs);
+    printk("      EIP : 0x%08X\n", eip);
+    printk("      ESP : 0x%08X\n", esp);
+    // 阻塞
     hang();
 }
+
 // 初始化中断描述符，和中断处理函数数组
 void idt_init()
 {
@@ -125,7 +171,7 @@ void pic_init()
     outb(PIC_S_DATA, 2);          // ICW3: 设置从片连接到主片的 IR2 引脚
     outb(PIC_S_DATA, 0b00000001); // ICW4: 8086模式, 正常EOI
 
-    outb(PIC_M_DATA, 0b11111110); // 对应位为0表示打开中断，此时0位为0表示打开时钟中断
+    outb(PIC_M_DATA, 0b11111111); // 关闭所有中断
     outb(PIC_S_DATA, 0b11111111); // 关闭所有中断
 }
 

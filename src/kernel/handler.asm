@@ -16,12 +16,28 @@ interrupt_handler_%1:
 
 interrupt_entry:
 
-    mov eax, [esp]
+    push ds
+    push es
+    push fs
+    push gs
+    pusha
+
+    mov eax, [esp + 12 * 4]
+    push eax
 
     ; 调用中断处理函数，handler_table 中存储了中断处理函数的指针
     call [handler_table + eax * 4]
 
+    add esp, 4
+
+    popa
+    pop gs
+    pop fs
+    pop es
+    pop ds
+
     add esp, 8
+    
     iret
 
 INTERRUPT_HANDLER 0x00, 0; divide by zero
