@@ -10,6 +10,7 @@
 #include <onix/global.h>
 #include <onix/task.h>
 #include <onix/interrupt.h>
+#include <onix/stdlib.h>
 
 
 void kernel_init()
@@ -18,6 +19,17 @@ void kernel_init()
     gdt_init();
     interrupt_init();
     // task_init();
+    //"movl %eax, %eax\n"这行汇编没有什么意义只是演示一下\n
+    asm volatile(
+        "sti\n"
+        "movl %eax, %eax\n"
+    );
+    u32 counter = 0;
+    while (true)
+    {
+        DEBUGK("looping in kernel init %d...\n",counter++);
+        delay(100000000);
+    }
     
     return;
 }
