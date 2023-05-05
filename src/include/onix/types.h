@@ -1,12 +1,17 @@
 #ifndef ONIX_TYPES_H
 #define ONIX_TYPES_H
 
-#define EOF -1
-#define NULL ((void *)0)
-#define EOS '\0'
+#include <onix/onix.h>
+
+#define EOF -1 //end of file
+#define NULL ((void *)0) //空指针
+#define EOS '\0' //end of string
+
+#ifndef __cplusplus
 #define bool _Bool
 #define true 1
 #define false 0
+#endif
 
 
 #define _packed __attribute__((packed))

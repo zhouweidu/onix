@@ -49,19 +49,15 @@ void rtc_handler(int vector)
     send_eoi(vector);
 
     // 读 CMOS 寄存器 C，允许 CMOS 继续产生中断
-    cmos_read(CMOS_C);
+    // cmos_read(CMOS_C);
 
-    set_alarm(1);
-
-    LOGK("rtc handler %d...\n", counter++);
-
-    // start_beep();
+    start_beep();
 }
 
 // 设置 secs 秒后发生实时时钟中断
 void set_alarm(u32 secs)
 {
-    // LOGK("beeping after %d seconds\n", secs);
+    LOGK("beeping after %d seconds\n", secs);
 
     tm time;
     time_read(&time);
@@ -103,11 +99,9 @@ void set_alarm(u32 secs)
 void rtc_init()
 {
     // cmos_write(CMOS_B, 0b01000010); // 打开周期中断
-    cmos_write(CMOS_B, 0b00100010); // 打开闹钟中断
-    cmos_read(CMOS_C);
-    set_alarm(5);
+    // cmos_write(CMOS_B, 0b00100010); // 打开闹钟中断
     // 设置周期中断频率
-    cmos_write(CMOS_A, (cmos_read(CMOS_A) & 0xf0) | 0b1110);
+    // cmos_write(CMOS_A, (cmos_read(CMOS_A) & 0xf0) | 0b1110);
 
     set_interrupt_handler(IRQ_RTC, rtc_handler);
     set_interrupt_mask(IRQ_RTC, true);
