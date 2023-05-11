@@ -2,6 +2,7 @@
     "files.associations": {
         "onix.h": "c",
         "types.h": "c",
-        "interrupt.h": "c"
+        "interrupt.h": "c",
+        "debug.h": "c"
     }
 }

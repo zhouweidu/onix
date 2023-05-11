@@ -6,8 +6,6 @@
 #include <onix/assert.h>
 #include <onix/stdlib.h>
 
-#define LOGK(fmt, args...) DEBUGK(fmt, ##args)
-
 #define CMOS_ADDR 0x70 // CMOS 地址寄存器
 #define CMOS_DATA 0x71 // CMOS 数据寄存器
 
