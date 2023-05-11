@@ -4,7 +4,7 @@
 #include <onix/assert.h>
 #include <onix/stdlib.h>
 #include <onix/string.h>
-#include <onix/types.h>
+#include <onix/bitmap.h>
 
 #define LOGK(fmt, args...) DEBUGK(fmt, ##args)
 // #define LOGK(fmt, args...)
@@ -26,7 +26,11 @@ static u32 KERNEL_PAGE_TABLE[] = {
     0x3000,
 };
 
+#define KERNEL_MAP_BITS 0x4000
+
 #define KERNEL_MEMORY_SIZE (0x100000 * sizeof(KERNEL_PAGE_TABLE))
+
+bitmap_t kernel_map;
 
 typedef struct ards_t
 {
@@ -98,9 +102,9 @@ void memory_map_init()
     // 初始化物理内存数组
     memory_map = (u8 *)memory_base;
 
-    // 计算物理内存数组占用的页数
+    // 计算物理内存数组占用的页数，占用了2页
     memory_map_pages = div_round_up(total_pages, PAGE_SIZE);
-    // LOGK("Memory map page count %d\n", memory_map_pages);
+    LOGK("Memory map page count %d\n", memory_map_pages);
 
     free_pages -= memory_map_pages;
 
@@ -115,6 +119,11 @@ void memory_map_init()
     }
 
     LOGK("Total pages %d free pages %d\n", total_pages, free_pages);
+
+    // 初始化内核虚拟内存位图，需要 8 位对齐，是针对页的索引（页号）的位图，也就是高20位
+    u32 length = (IDX(KERNEL_MEMORY_SIZE) - IDX(MEMORY_BASE)) / 8;
+    bitmap_init(&kernel_map, (u8 *)KERNEL_MAP_BITS, length, IDX(MEMORY_BASE));
+    bitmap_scan(&kernel_map, memory_map_pages);
 }
 
 // 分配一页物理内存
@@ -162,7 +171,7 @@ static void put_page(u32 addr)
     LOGK("PUT page 0x%p\n", addr);
 }
 
-u32 inline get_cr3()
+u32 get_cr3()
 {
     asm volatile("movl %cr3, %eax\n");
 }
@@ -251,22 +260,67 @@ static void flush_tlb(u32 vaddr)
                  : "memory");
 }
 
+// 从位图中扫描 count 个连续的页
+static u32 scan_page(bitmap_t *map, u32 count)
+{
+    assert(count > 0);
+    int32 index = bitmap_scan(map, count);
+
+    if (index == EOF)
+    {
+        panic("Scan page fail!!!");
+    }
+
+    u32 addr = PAGE(index);
+    LOGK("Scan page 0x%p count %d\n", addr, count);
+    return addr;
+}
+
+// 与 scan_page 相对，重置相应的页
+static void reset_page(bitmap_t *map, u32 addr, u32 count)
+{
+    ASSERT_PAGE(addr);
+    assert(count > 0);
+    u32 index = IDX(addr);
+
+    for (size_t i = 0; i < count; i++)
+    {
+        assert(bitmap_test(map, index + i));
+        bitmap_set(map, index + i, 0);
+    }
+}
+
+// 分配 count 个连续的内核页
+u32 alloc_kpage(u32 count)
+{
+    assert(count > 0);
+    u32 vaddr = scan_page(&kernel_map, count);
+    LOGK("ALLOC kernel pages 0x%p count %d\n", vaddr, count);
+    return vaddr;
+}
+
+// 释放 count 个连续的内核页
+void free_kpage(u32 vaddr, u32 count)
+{
+    ASSERT_PAGE(vaddr);
+    assert(count > 0);
+    reset_page(&kernel_map, vaddr, count);
+    LOGK("FREE  kernel pages 0x%p count %d\n", vaddr, count);
+}
+
 void memory_test()
 {
-    u32 vaddr = 0x4000000;
-    u32 paddr = 0x1400000;
-    u32 table = 0x900000;
-
-    page_entry_t *pde = get_pde();
-    page_entry_t *dentry = &pde[DIDX(vaddr)];
-    entry_init(dentry, IDX(table));
-
-    page_entry_t *pte = get_pte(vaddr);
-    page_entry_t *tentry = &pte[TIDX(vaddr)];
-    entry_init(tentry,IDX(paddr));
-    char *ptr = (char *)(0x4000000);
-    ptr[0]='a';
-    entry_init(tentry, IDX(0x1500000));
-    flush_tlb(vaddr);
-    ptr[2]='b';
+    u32 *pages = (u32 *)(0x200000);
+    // 总共有 8M -（1M多）的页，有两页被memory_map占用了，0x700-0x2
+    u32 count = 0x6fe;
+    for (size_t i = 0; i < count; i++)
+    {
+        pages[i] = alloc_kpage(1);
+        LOGK("0x%x\n", i);
+    }
+    for (size_t i = 0; i < count; i++)
+    {
+        free_kpage(pages[i],1);
+    }
+    
 }
