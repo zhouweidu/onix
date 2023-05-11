@@ -45,10 +45,21 @@ void clock_handler(int vector)
 {
     assert(vector == 0x20);
     send_eoi(vector); // 发送中断处理结束
+    stop_beep();
     
     jiffies++;
     // DEBUGK("clock jiffies %d ...\n", jiffies);
-    stop_beep();
+
+    task_t *task=running_task();
+    assert(task->magic==ONIX_MAGIC);
+    task->jiffies=jiffies;
+    task->ticks--;
+    if (!task->ticks)
+    {
+        task->ticks=task->priority;
+        schedule();
+    }
+    
 }
 
 void pit_init()
