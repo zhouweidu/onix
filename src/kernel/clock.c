@@ -41,11 +41,14 @@ void stop_beep()
     
 }
 
+extern void task_wakeup();
+
 void clock_handler(int vector)
 {
     assert(vector == 0x20);
     send_eoi(vector); // 发送中断处理结束
     stop_beep();
+    task_wakeup();
     
     jiffies++;
     // DEBUGK("clock jiffies %d ...\n", jiffies);
@@ -56,7 +59,6 @@ void clock_handler(int vector)
     task->ticks--;
     if (!task->ticks)
     {
-        task->ticks=task->priority;
         schedule();
     }
     
