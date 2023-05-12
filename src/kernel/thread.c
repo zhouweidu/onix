@@ -3,7 +3,7 @@
 #include <onix/debug.h>
 #include <onix/mutex.h>
 
-mutex_t mutex;
+lock_t lock;
 
 void idle_thread()
 {
@@ -22,28 +22,26 @@ void idle_thread()
 
 void init_thread()
 {
-    mutex_init(&mutex);
+    lock_init(&lock);
     set_interrupt_state(true);
     u32 counter = 0;
     while (true)
     {
-        mutex_lock(&mutex);
+        lock_acquire(&lock);
         LOGK("init task %d...\n", counter++);
-        mutex_unlock(&mutex);
-        // sleep(500);
+        lock_release(&lock);
     }
 }
 
 void test_thread()
 {
-    mutex_init(&mutex);
+    lock_init(&lock);
     set_interrupt_state(true);
     u32 counter = 0;
     while (true)
     {
-        mutex_lock(&mutex);
+        lock_acquire(&lock);
         LOGK("test task %d...\n", counter++);
-        mutex_unlock(&mutex);
-        // sleep(709);
+        lock_release(&lock);
     }
 }
