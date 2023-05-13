@@ -2,9 +2,15 @@
 #include <onix/io.h>
 #include <onix/assert.h>
 #include <onix/debug.h>
+#include <onix/fifo.h>
+#include <onix/mutex.h>
+#include <onix/task.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_CTRL_PORT 0x64
+
+#define KEYBOARD_CMD_LED 0xED // 设置 LED 状态
+#define KEYBOARD_CMD_ACK 0xFA // ACK
 
 #define INV 0 // 不可见字符
 
@@ -216,6 +222,13 @@ static char keymap[][4] = {
     /* 0x5F */ {INV, INV, false, false}, // PrintScreen
 };
 
+static lock_t lock;    // 锁
+static task_t *waiter; // 等待输入的任务
+
+#define BUFFER_SIZE 64        // 输入缓冲区大小
+static char buf[BUFFER_SIZE]; // 输入缓冲区
+static fifo_t fifo;           // 循环队列
+
 static bool capslock_state; // 大写锁定
 static bool scrlock_state;  // 滚动锁定
 static bool numlock_state;  // 数字锁定
@@ -229,6 +242,43 @@ static bool extcode_state;  // 扩展码状态
 
 // SHIFT 键状态
 #define shift_state (keymap[KEY_SHIFT_L][2] || keymap[KEY_SHIFT_R][2])
+
+static bool is_numlock_key(u16 makecode)
+{
+    return (makecode >= 0x47 && makecode <= 0x49) || (makecode >= 0x4b && makecode <= 0x4d) || (makecode >= 0x4f && makecode <= 0x53);
+}
+
+static void keyboard_wait()
+{
+    u8 state;
+    do
+    {
+        state = inb(KEYBOARD_CTRL_PORT);
+    } while (state & 0x02); // 读取键盘缓冲区，直到为空
+}
+
+static void keyboard_ack()
+{
+    u8 state;
+    do
+    {
+        state = inb(KEYBOARD_DATA_PORT);
+    } while (state != KEYBOARD_CMD_ACK);
+}
+
+static void set_leds()
+{
+    u8 leds = (capslock_state << 2) | (numlock_state << 1) | scrlock_state;
+    keyboard_wait();
+    // 设置 LED 命令
+    outb(KEYBOARD_DATA_PORT, KEYBOARD_CMD_LED);
+    keyboard_ack();
+
+    keyboard_wait();
+    // 设置 LED 灯状态
+    outb(KEYBOARD_DATA_PORT, leds);
+    keyboard_ack();
+}
 
 void keyboard_handler(int vector)
 {
@@ -284,6 +334,11 @@ void keyboard_handler(int vector)
         return;
     }
 
+    if ((!numlock_state) && is_numlock_key(makecode))
+    {
+        return;
+    }
+
     // 下面是通码，按键按下
     keymap[makecode][ext] = true;
 
@@ -303,6 +358,11 @@ void keyboard_handler(int vector)
     {
         scrlock_state = !scrlock_state;
         led = true;
+    }
+
+    if (led)
+    {
+        set_leds();
     }
 
     // 计算 shift 状态
@@ -338,7 +398,30 @@ void keyboard_handler(int vector)
     if (ch == INV)
         return;
 
-    LOGK("keydown %c \n", ch);
+    // LOGK("keydown %c \n", ch);
+    fifo_put(&fifo, ch);
+    if (waiter != NULL)
+    {
+        task_unblock(waiter);
+        waiter = NULL;
+    }
+}
+
+u32 keyboard_read(char *buf, u32 count)
+{
+    lock_acquire(&lock);
+    int nr = 0;
+    while (nr < count)
+    {
+        while (fifo_empty(&fifo))
+        {
+            waiter = running_task();
+            task_block(waiter, NULL, TASK_WAITING);
+        }
+        buf[nr++] = fifo_get(&fifo);
+    }
+    lock_release(&lock);
+    return count;
 }
 
 void keyboard_init()
@@ -347,6 +430,12 @@ void keyboard_init()
     scrlock_state = false;
     capslock_state = false;
     extcode_state = false;
+
+    fifo_init(&fifo, buf, BUFFER_SIZE);
+    lock_init(&lock);
+    waiter = NULL;
+
+    set_leds();
 
     set_interrupt_handler(IRQ_KEYBOARD, keyboard_handler);
     set_interrupt_mask(IRQ_KEYBOARD, true);
