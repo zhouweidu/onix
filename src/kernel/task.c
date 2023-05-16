@@ -8,6 +8,7 @@
 #include <onix/bitmap.h>
 #include <onix/syscall.h>
 #include <onix/global.h>
+#include <onix/arena.h>
 
 #define NR_TASKS 64
 
@@ -232,6 +233,11 @@ void task_to_user_mode(target_t target)
 {
     task_t *task = running_task();
 
+    task->vmap = kmalloc(sizeof(bitmap_t));
+    // 一页内存按位算只能表示128MB的空间
+    void *buf = (void *)alloc_kpage(1);
+    bitmap_init(task->vmap, buf, PAGE_SIZE, KERNEL_MEMORY_SIZE / PAGE_SIZE);
+
     u32 addr = (u32)task + PAGE_SIZE;
 
     addr -= sizeof(intr_frame_t);
@@ -279,7 +285,6 @@ static void task_setup()
 extern void idle_thread();
 extern void init_thread();
 extern void test_thread();
-extern void real_init_thread();
 
 void task_init()
 {

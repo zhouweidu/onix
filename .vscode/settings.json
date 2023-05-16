@@ -3,6 +3,10 @@
         "onix.h": "c",
         "types.h": "c",
         "interrupt.h": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "stdarg.h": "c",
+        "stdio.h": "c",
+        "syscall.h": "c",
+        "cstdio": "c"
     }
 }

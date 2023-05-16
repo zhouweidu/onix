@@ -51,6 +51,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/rtc.o \
 	$(BUILD)/kernel/memory.o \
 	$(BUILD)/kernel/keyboard.o \
+	$(BUILD)/kernel/arena.o \
 	$(BUILD)/lib/bitmap.o \
 	$(BUILD)/lib/list.o \
 	$(BUILD)/lib/fifo.o \
@@ -58,6 +59,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/vsprintf.o \
 	$(BUILD)/lib/stdlib.o \
 	$(BUILD)/lib/syscall.o \
+	$(BUILD)/lib/printf.o \
 
 	$(shell mkdir -p $(dir $@))
 	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)

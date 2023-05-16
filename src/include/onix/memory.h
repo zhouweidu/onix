@@ -8,6 +8,10 @@
 
 #define KERNEL_PAGE_DIR 0x1000
 
+#define KERNEL_MEMORY_SIZE 0x800000
+
+#define USER_STACK_TOP 0x8000000
+
 // 内核页表索引
 static u32 KERNEL_PAGE_TABLE[] = {
     0x2000,
@@ -40,4 +44,7 @@ u32 alloc_kpage(u32 count);
 // 释放 count 个连续的内核页
 void free_kpage(u32 vaddr, u32 count);
 
+void link_page(u32 vaddr);
+
+void unlink_page(u32 vaddr);
 #endif
