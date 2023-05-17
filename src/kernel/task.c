@@ -159,6 +159,11 @@ void task_activate(task_t *task)
 {
     assert(task->magic == ONIX_MAGIC);
 
+    if (task->pde != get_cr3())
+    {
+        set_cr3(task->pde);
+    }
+
     if (task->uid != KERNEL_USER)
     {
         tss.esp0 = (u32)task + PAGE_SIZE;
@@ -238,6 +243,9 @@ void task_to_user_mode(target_t target)
     void *buf = (void *)alloc_kpage(1);
     bitmap_init(task->vmap, buf, PAGE_SIZE, KERNEL_MEMORY_SIZE / PAGE_SIZE);
 
+    task->pde = (u32)copy_pde();
+    set_cr3(task->pde);
+
     u32 addr = (u32)task + PAGE_SIZE;
 
     addr -= sizeof(intr_frame_t);
@@ -262,12 +270,10 @@ void task_to_user_mode(target_t target)
 
     iframe->error = ONIX_MAGIC;
 
-    u32 stack3 = alloc_kpage(1);
-
     iframe->eip = (u32)target;
     iframe->eflags = (0 << 12 | 0b10 | 1 << 9);
     // esp指向的是用户栈，stack3是用户栈，task+PAGE_SIZE是内核栈
-    iframe->esp = stack3 + PAGE_SIZE;
+    iframe->esp = USER_STACK_TOP;
     asm volatile(
         "movl %0, %%esp\n"
         "jmp interrupt_exit\n" ::"m"(iframe));

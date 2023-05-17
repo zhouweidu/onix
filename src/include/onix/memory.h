@@ -3,20 +3,24 @@
 
 #include <onix/types.h>
 
-#define PAGE_SIZE 0x1000 //一页的大小，4K
-#define MEMORY_BASE 0x100000 //1M 可用内存的开始位置
-
-#define KERNEL_PAGE_DIR 0x1000
-
-#define KERNEL_MEMORY_SIZE 0x800000
-
-#define USER_STACK_TOP 0x8000000
-
 // 内核页表索引
 static u32 KERNEL_PAGE_TABLE[] = {
     0x2000,
     0x3000,
 };
+
+#define PAGE_SIZE 0x1000     // 一页的大小，4K
+#define MEMORY_BASE 0x100000 // 1M 可用内存的开始位置
+
+#define KERNEL_PAGE_DIR 0x1000
+
+#define KERNEL_MEMORY_SIZE (0x100000 * sizeof(KERNEL_PAGE_TABLE))
+
+#define USER_STACK_TOP 0x8000000
+
+#define USER_STACK_SIZE 0x200000
+
+#define USER_STACK_BOTTOM (USER_STACK_TOP - USER_STACK_SIZE)
 
 typedef struct page_entry_t
 {
@@ -35,6 +39,7 @@ typedef struct page_entry_t
     u32 index : 20;  // 页索引
 } _packed page_entry_t;
 
+u32 get_cr2();
 u32 get_cr3();
 void set_cr3(u32 pde);
 
@@ -47,4 +52,7 @@ void free_kpage(u32 vaddr, u32 count);
 void link_page(u32 vaddr);
 
 void unlink_page(u32 vaddr);
+
+// 拷贝页目录
+page_entry_t *copy_pde();
 #endif

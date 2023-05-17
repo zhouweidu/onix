@@ -27,13 +27,6 @@ task_t *task = NULL;
 
 static u32 sys_test()
 {
-    // LOGK("syscall test...\n");
-    char *ptr;
-    link_page(0x1600000);
-    ptr = (char *)0x1600000;
-    ptr[3]='T';
-    unlink_page(0x1600000);
-
     return 255;
 }
 

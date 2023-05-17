@@ -18,8 +18,6 @@
 
 #define KERNEL_MAP_BITS 0x4000
 
-#define KERNEL_MEMORY_SIZE (0x100000 * sizeof(KERNEL_PAGE_TABLE))
-
 #define PDE_MASK 0xffc00000
 
 bitmap_t kernel_map;
@@ -147,7 +145,7 @@ static void put_page(u32 addr)
     // idx 大于 1M 并且 小于 总页面数
     assert(idx >= start_page && idx < total_pages);
 
-    // 保证只有一个引用
+    // 保证至少有一个引用
     assert(memory_map[idx] >= 1);
 
     // 物理引用减一
@@ -161,6 +159,11 @@ static void put_page(u32 addr)
 
     assert(free_pages > 0 && free_pages < total_pages);
     LOGK("PUT page 0x%p\n", addr);
+}
+
+u32 get_cr2()
+{
+    asm volatile("movl %cr2, %eax\n");
 }
 
 u32 get_cr3()
@@ -376,9 +379,58 @@ void unlink_page(u32 vaddr)
     u32 paddr = PAGE(entry->index);
 
     DEBUGK("UNLINK from 0x%p to 0x%p\n", vaddr, paddr);
-    if (memory_map[entry->index] == 1)
-    {
-        put_page(paddr);
-    }
+
+    put_page(paddr);
+
     flush_tlb(vaddr);
+}
+
+page_entry_t *copy_pde()
+{
+    task_t *task = running_task();
+    page_entry_t *pde = (page_entry_t *)alloc_kpage(1);
+    memcpy(pde, (void *)task->pde, PAGE_SIZE);
+    page_entry_t *entry = &pde[1023];
+    entry_init(entry, IDX(pde));
+    return pde;
+}
+
+typedef struct page_error_code_t
+{
+    u8 present : 1;
+    u8 write : 1;
+    u8 user : 1;
+    u8 reserved0 : 1;
+    u8 fetch : 1;
+    u8 protection : 1;
+    u8 shadow : 1;
+    u16 reserved1 : 8;
+    u8 sgx : 1;
+    u16 reserved2;
+} _packed page_error_code_t;
+
+void page_fault(
+    u32 vector,
+    u32 edi, u32 esi, u32 ebp, u32 esp,
+    u32 ebx, u32 edx, u32 ecx, u32 eax,
+    u32 gs, u32 fs, u32 es, u32 ds,
+    u32 vector0, u32 error, u32 eip, u32 cs, u32 eflags)
+{
+    assert(vector == 0xe);
+    u32 vaddr = get_cr2();
+    LOGK("fault address 0x%p\n", vaddr);
+
+    page_error_code_t *code = (page_error_code_t *)&error;
+    task_t *task = running_task();
+
+    assert(KERNEL_MEMORY_SIZE <= vaddr && vaddr < USER_STACK_TOP);
+
+    // 如果用户程序访问了不该访问的内存
+    if (!code->present && vaddr > USER_STACK_BOTTOM)
+    {
+        u32 page = PAGE(IDX(vaddr));
+        link_page(page);
+        return;
+    }
+    panic("page fault!!!");
 }

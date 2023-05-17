@@ -24,18 +24,24 @@ void idle_thread()
 
 extern u32 keyboard_read(char *buf, u32 count);
 
+void test_recursion()
+{
+    char temp[0x400];
+    test_recursion();
+}
+
 static void user_init_thread()
 {
-    //0010 0011
-    u32 counter=0;
+    // 0010 0011
+    u32 counter = 0;
     char ch;
     while (true)
     {
-        test();
-        sleep(10000);
-        // printf("task is in user mode %d\n",counter++);
+        // test();
+        printf("task is in user mode %d\n",counter++);
+        test_recursion();
+        sleep(1000);
     }
-    
 }
 
 void init_thread()
@@ -61,16 +67,7 @@ void test_thread()
     u32 counter = 0;
     while (true)
     {
-        // LOGK("test task %d...\n", counter++);
-        void *ptr=kmalloc(1200);
-        LOGK("kmalloc 0x%p\n",ptr);
-        kfree(ptr);
-        ptr=kmalloc(1024);
-        LOGK("kmalloc 0x%p\n",ptr);
-        kfree(ptr);
-        ptr=kmalloc(54);
-        LOGK("kmalloc 0x%p\n",ptr);
-        kfree(ptr);
-        sleep(500);
+        LOGK("test task %d...\n", counter++);
+        sleep(2000);
     }
 }
