@@ -22,14 +22,6 @@ void idle_thread()
     }
 }
 
-extern u32 keyboard_read(char *buf, u32 count);
-
-void test_recursion()
-{
-    char temp[0x400];
-    test_recursion();
-}
-
 static void user_init_thread()
 {
     // 0010 0011
@@ -37,9 +29,7 @@ static void user_init_thread()
     char ch;
     while (true)
     {
-        // test();
-        printf("task is in user mode %d\n",counter++);
-        test_recursion();
+        printf("init thread %d %d %d\n", getpid(), getppid(), counter++);
         sleep(1000);
     }
 }
@@ -67,7 +57,8 @@ void test_thread()
     u32 counter = 0;
     while (true)
     {
-        LOGK("test task %d...\n", counter++);
+        printf("test thread %d %d %d\n", getpid(), getppid(), counter++);
+        // LOGK("test task %d...\n", counter++);
         sleep(2000);
     }
 }

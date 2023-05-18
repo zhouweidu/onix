@@ -30,11 +30,26 @@ static task_t *get_free_task()
     {
         if (task_table[i] == NULL)
         {
-            task_table[i] = (task_t *)alloc_kpage(1);
-            return task_table[i];
+            task_t *task = (task_t *)alloc_kpage(1);
+            memset(task, 0, PAGE_SIZE);
+            task->pid = i;
+            task_table[i] = task;
+            return task;
         }
     }
     panic("No more tasks");
+}
+
+pid_t sys_getpid()
+{
+    task_t *task = running_task();
+    return task->pid;
+}
+
+pid_t sys_getppid()
+{
+    task_t *task = running_task();
+    return task->ppid;
 }
 
 // 从任务数组中查找某种状态的任务，自己除外
@@ -206,7 +221,6 @@ void schedule()
 static task_t *task_create(target_t target, const char *name, u32 priority, u32 uid)
 {
     task_t *task = get_free_task();
-    memset(task, 0, PAGE_SIZE);
 
     u32 stack = (u32)task + PAGE_SIZE;
 
@@ -228,6 +242,7 @@ static task_t *task_create(target_t target, const char *name, u32 priority, u32 
     task->uid = uid;
     task->vmap = &kernel_map;
     task->pde = KERNEL_PAGE_DIR;
+    task->brk = KERNEL_MEMORY_SIZE;
     task->magic = ONIX_MAGIC;
     return task;
 }
@@ -271,6 +286,7 @@ void task_to_user_mode(target_t target)
     iframe->error = ONIX_MAGIC;
 
     iframe->eip = (u32)target;
+    //开中断，IOPL为0，io只有在特权级0才能被执行，用户模式in out指令会报错
     iframe->eflags = (0 << 12 | 0b10 | 1 << 9);
     // esp指向的是用户栈，stack3是用户栈，task+PAGE_SIZE是内核栈
     iframe->esp = USER_STACK_TOP;
