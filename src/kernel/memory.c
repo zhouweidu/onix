@@ -116,7 +116,7 @@ void memory_map_init()
     bitmap_scan(&kernel_map, memory_map_pages);
 }
 
-// 分配一页物理内存
+// 分配一页物理内存 8M以上
 static u32 get_page()
 {
     for (size_t i = start_page; i < total_pages; i++)
@@ -385,6 +385,20 @@ void unlink_page(u32 vaddr)
     flush_tlb(vaddr);
 }
 
+// 拷贝一页，返回拷贝后的物理地址
+static u32 copy_page(void *page)
+{
+    u32 paddr = get_page();
+
+    page_entry_t *entry = get_pte(0, false);
+    entry_init(entry, IDX(paddr));
+
+    memcpy((void *)0, (void *)page, PAGE_SIZE);
+
+    entry->present = false;
+    return paddr;
+}
+
 page_entry_t *copy_pde()
 {
     task_t *task = running_task();
@@ -392,6 +406,41 @@ page_entry_t *copy_pde()
     memcpy(pde, (void *)task->pde, PAGE_SIZE);
     page_entry_t *entry = &pde[1023];
     entry_init(entry, IDX(pde));
+
+    page_entry_t *dentry;
+
+    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < 1023; didx++)
+    {
+        dentry = &pde[didx];
+        if (!dentry->present)
+            continue;
+
+        page_entry_t *pte = (page_entry_t *)(PDE_MASK | (didx << 12));
+
+        for (size_t tidx = 0; tidx < 1024; tidx++)
+        {
+            entry = &pte[tidx];
+            if (!entry->present)
+                continue;
+
+            // 对应物理内存引用大于 0
+            assert(memory_map[entry->index] > 0);
+
+            entry->write = false;
+
+            // 对应物理页引用加 1
+            memory_map[entry->index]++;
+
+            assert(memory_map[entry->index] < 255);
+        }
+
+        //必须在虚拟内存允许的方式下拷贝一页内存，物理内存必须8M以上
+        u32 paddr = copy_page(pte);
+        dentry->index = IDX(paddr);
+    }
+
+    set_cr3(task->pde);
+
     return pde;
 }
 
@@ -425,13 +474,41 @@ void page_fault(
 
     assert(KERNEL_MEMORY_SIZE <= vaddr && vaddr < USER_STACK_TOP);
 
-    // 如果用户程序访问了不该访问的内存
+    if (code->present)
+    {
+        //写时复制
+        assert(code->write);
+
+        page_entry_t *entry = get_entry(vaddr, false);
+
+        assert(entry->present);   // 目前写内存应该是存在的
+        assert(memory_map[entry->index] > 0);
+        if (memory_map[entry->index] == 1)
+        {
+            entry->write = true;
+            LOGK("WRITE page for 0x%p\n", vaddr);
+        }
+        else
+        {
+            void *page = (void *)PAGE(IDX(vaddr));
+            u32 paddr = copy_page(page);
+            memory_map[entry->index]--;
+            entry_init(entry, IDX(paddr));
+            flush_tlb(vaddr);
+            LOGK("COPY page for 0x%p\n", vaddr);
+        }
+        return;
+    }
+
     if (!code->present && (vaddr < task->brk || vaddr >= USER_STACK_BOTTOM))
     {
         u32 page = PAGE(IDX(vaddr));
         link_page(page);
+        // BMB;
         return;
     }
+
+    LOGK("task 0x%p name %s brk 0x%p page fault\n", task, task->name, task->brk);
     panic("page fault!!!");
 }
 

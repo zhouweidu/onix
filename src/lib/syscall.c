@@ -45,6 +45,11 @@ u32 test()
     return _syscall0(SYS_NR_TEST);
 }
 
+pid_t fork()
+{
+    return _syscall0(SYS_NR_FORK);
+}
+
 void yield()
 {
     _syscall0(SYS_NR_YIELD);
@@ -55,16 +60,6 @@ void sleep(u32 ms)
     _syscall1(SYS_NR_SLEEP, ms);
 }
 
-int32 brk(void *addr)
-{
-    return _syscall1(SYS_NR_BRK, (u32)addr);
-}
-
-int32 write(fd_t fd, char *buf, u32 len)
-{
-    return _syscall3(SYS_NR_WRITE, fd, (u32)buf, len);
-}
-
 pid_t getpid()
 {
     return _syscall0(SYS_NR_GETPID);
@@ -73,4 +68,14 @@ pid_t getpid()
 pid_t getppid()
 {
     return _syscall0(SYS_NR_GETPPID);
+}
+
+int32 brk(void *addr)
+{
+    return _syscall1(SYS_NR_BRK, (u32)addr);
+}
+
+int32 write(fd_t fd, char *buf, u32 len)
+{
+    return _syscall3(SYS_NR_WRITE, fd, (u32)buf, len);
 }
