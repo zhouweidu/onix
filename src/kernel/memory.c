@@ -434,7 +434,7 @@ page_entry_t *copy_pde()
             assert(memory_map[entry->index] < 255);
         }
 
-        //必须在虚拟内存允许的方式下拷贝一页内存，物理内存必须8M以上
+        // 必须在虚拟内存允许的方式下拷贝一页内存，物理内存必须8M以上
         u32 paddr = copy_page(pte);
         dentry->index = IDX(paddr);
     }
@@ -442,6 +442,44 @@ page_entry_t *copy_pde()
     set_cr3(task->pde);
 
     return pde;
+}
+
+void free_pde()
+{
+    task_t *task = running_task();
+    assert(task->uid != KERNEL_USER);
+
+    page_entry_t *pde = get_pde();
+
+    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < 1023; didx++)
+    {
+        page_entry_t *dentry = &pde[didx];
+        if (!dentry->present)
+        {
+            continue;
+        }
+
+        page_entry_t *pte = (page_entry_t *)(PDE_MASK | (didx << 12));
+
+        for (size_t tidx = 0; tidx < 1024; tidx++)
+        {
+            page_entry_t *entry = &pte[tidx];
+            if (!entry->present)
+            {
+                continue;
+            }
+
+            assert(memory_map[entry->index] > 0);
+            put_page(PAGE(entry->index));
+        }
+
+        // 释放页表
+        put_page(PAGE(dentry->index));
+    }
+
+    // 释放页目录
+    free_kpage(task->pde, 1);
+    LOGK("free pages %d\n", free_pages);
 }
 
 typedef struct page_error_code_t
@@ -476,12 +514,12 @@ void page_fault(
 
     if (code->present)
     {
-        //写时复制
+        // 写时复制
         assert(code->write);
 
         page_entry_t *entry = get_entry(vaddr, false);
 
-        assert(entry->present);   // 目前写内存应该是存在的
+        assert(entry->present); // 目前写内存应该是存在的
         assert(memory_map[entry->index] > 0);
         if (memory_map[entry->index] == 1)
         {

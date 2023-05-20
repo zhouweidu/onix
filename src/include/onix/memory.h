@@ -56,5 +56,7 @@ void unlink_page(u32 vaddr);
 // 拷贝页目录
 page_entry_t *copy_pde();
 
+void free_pde();
+
 int32 sys_brk(void *addr);
 #endif
