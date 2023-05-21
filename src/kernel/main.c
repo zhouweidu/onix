@@ -10,6 +10,7 @@ extern void clock_init();
 extern void time_init();
 extern void rtc_init();
 extern void keyboard_init();
+extern void ide_init();
 extern void task_init();
 extern void syscall_init();
 extern void tss_init();
@@ -24,8 +25,9 @@ void kernel_init()
     interrupt_init();
     clock_init();
     keyboard_init();
-    // time_init();
+    time_init();
     // rtc_init();
+    ide_init();
 
     task_init();
     syscall_init();

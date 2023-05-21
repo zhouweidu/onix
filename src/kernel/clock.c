@@ -36,9 +36,8 @@ void stop_beep()
     if (beeping && jiffies > beeping)
     {
         outb(SPEAKER_REG, inb(SPEAKER_REG) & 0xfc);
-        beeping=0;
+        beeping = 0;
     }
-    
 }
 
 extern void task_wakeup();
@@ -49,19 +48,25 @@ void clock_handler(int vector)
     send_eoi(vector); // 发送中断处理结束
     stop_beep();
     task_wakeup();
-    
+
     jiffies++;
     // DEBUGK("clock jiffies %d ...\n", jiffies);
 
-    task_t *task=running_task();
-    assert(task->magic==ONIX_MAGIC);
-    task->jiffies=jiffies;
+    task_t *task = running_task();
+    assert(task->magic == ONIX_MAGIC);
+    task->jiffies = jiffies;
     task->ticks--;
     if (!task->ticks)
     {
         schedule();
     }
-    
+}
+
+extern time_t startup_time;
+
+time_t sys_time()
+{
+    return startup_time + (jiffies * JIFFY) / 1000;
 }
 
 void pit_init()

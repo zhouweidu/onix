@@ -49,6 +49,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/clock.o \
 	$(BUILD)/kernel/time.o \
 	$(BUILD)/kernel/rtc.o \
+	$(BUILD)/kernel/ide.o \
 	$(BUILD)/kernel/memory.o \
 	$(BUILD)/kernel/keyboard.o \
 	$(BUILD)/kernel/arena.o \
@@ -82,8 +83,8 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	test -n "$$(find $(BUILD)/system.bin -size -100k)" 
 	dd if=$(BUILD)/system.bin of=$@ bs=512 count=200 seek=10 conv=notrunc
 
-.PHONY:test
-test: $(BUILD)/master.img
+.PHONY:image
+image: $(BUILD)/master.img
 
 
 .PHONY: clean
