@@ -135,7 +135,7 @@ static u32 get_page()
     panic("Out of Memory!!!");
 }
 
-// 释放一页物理内存
+// 释放一页物理内存，addr是物理地址
 static void put_page(u32 addr)
 {
     ASSERT_PAGE(addr);
@@ -210,7 +210,7 @@ void mapping_init()
     {
         page_entry_t *pte = (page_entry_t *)KERNEL_PAGE_TABLE[didx];
         memset(pte, 0, PAGE_SIZE);
-
+        
         page_entry_t *dentry = &pde[didx];
         entry_init(dentry, IDX((u32)pte));
 
@@ -251,7 +251,7 @@ static page_entry_t *get_pte(u32 vaddr, bool create)
     page_entry_t *entry = &pde[idx];
 
     assert(create || (!create && entry->present));
-
+    
     page_entry_t *table = (page_entry_t *)(PDE_MASK | (idx << 12));
 
     if (!entry->present)
@@ -425,7 +425,7 @@ page_entry_t *copy_pde()
 
             // 对应物理内存引用大于 0
             assert(memory_map[entry->index] > 0);
-
+            //置为只读
             entry->write = false;
 
             // 对应物理页引用加 1

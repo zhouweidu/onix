@@ -22,6 +22,7 @@ typedef enum task_state_t
     TASK_DIED,     // 死亡
 } task_state_t;
 
+//PCB
 typedef struct task_t
 {
     u32 *stack;               // 内核栈
@@ -42,6 +43,7 @@ typedef struct task_t
     u32 magic;                // 内核魔数，用于检测栈溢出
 } task_t;
 
+//页末尾的线程上下文
 typedef struct task_frame_t
 {
     u32 edi;

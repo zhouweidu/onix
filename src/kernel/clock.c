@@ -17,8 +17,8 @@
 #define BEEP_HZ 440
 #define BEEP_COUNTER (OSCILLATOR / BEEP_HZ)
 
-u32 volatile jiffies = 0;
-u32 jiffy = JIFFY;
+u32 volatile jiffies = 0;//全局时间片，总共经过了多少个时间片
+u32 jiffy = JIFFY;       //每个时间片的毫秒值
 
 u32 volatile beeping = 0;
 
