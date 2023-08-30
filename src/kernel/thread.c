@@ -61,6 +61,8 @@ void init_thread()
     //     set_interrupt_state(intr);
     // }
     char temp[100];
+    set_interrupt_state(true);
+    test();
     task_to_user_mode(user_init_thread);
 }
 

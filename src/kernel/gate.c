@@ -5,8 +5,11 @@
 #include <onix/task.h>
 #include <onix/console.h>
 #include <onix/memory.h>
+#include <onix/ide.h>
+#include <onix/string.h>
 
 #define SYSCALL_SIZE 256
+extern ide_ctrl_t controllers[IDE_CTRL_NR];
 
 handler_t syscall_table[SYSCALL_SIZE];
 
@@ -27,6 +30,13 @@ task_t *task = NULL;
 
 static u32 sys_test()
 {
+    u16 *buf = (u16 *)alloc_kpage(1);
+    LOGK("pio read buffer 0x%p", buf);
+    ide_disk_t *disk = &controllers[0].disks[0];
+    ide_pio_read(disk, buf, 4, 0);
+    memset(buf, 0x5a, 512);
+    ide_pio_write(disk, buf, 1, 1);
+    free_kpage((u32)buf, 1);
     return 255;
 }
 

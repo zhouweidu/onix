@@ -112,7 +112,7 @@ qemug: $(BUILD)/master.img
 	$(QEMU) -s -S
 
 $(BUILD)/master.vmdk: $(BUILD)/master.img
-	qemu-img convert -sO vmdk $< $@
+	qemu-img convert -O vmdk $< $@
 
 .PHONY: vmdk
 vmdk: $(BUILD)/master.vmdk
