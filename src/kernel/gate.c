@@ -5,11 +5,12 @@
 #include <onix/task.h>
 #include <onix/console.h>
 #include <onix/memory.h>
-#include <onix/ide.h>
+#include <onix/device.h>
 #include <onix/string.h>
 
 #define SYSCALL_SIZE 256
-extern ide_ctrl_t controllers[IDE_CTRL_NR];
+
+extern int32 console_write(void *dev, char *buf, u32 count);
 
 handler_t syscall_table[SYSCALL_SIZE];
 
@@ -30,12 +31,22 @@ task_t *task = NULL;
 
 static u32 sys_test()
 {
-    u16 *buf = (u16 *)alloc_kpage(1);
-    LOGK("pio read buffer 0x%p", buf);
-    ide_disk_t *disk = &controllers[0].disks[0];
-    ide_pio_read(disk, buf, 4, 0);
-    memset(buf, 0x5a, 512);
-    ide_pio_write(disk, buf, 1, 1);
+    char ch;
+    device_t *device;
+
+    // device = device_find(DEV_KEYBOARD, 0);
+    // assert(device);
+    // device_read(device->dev, &ch, 1, 0, 0);
+
+    // device = device_find(DEV_CONSOLE, 0);
+    // assert(device);
+    // device_write(device->dev, &ch, 1, 0, 0);
+
+    void *buf = (void *)alloc_kpage(1);
+    device = device_find(DEV_IDE_PART, 0);
+    assert(device);
+    memset(buf, running_task()->uid, 512);
+    device_request(device->dev, buf, 1, running_task()->uid, 0, REQ_WRITE);
     free_kpage((u32)buf, 1);
     return 255;
 }
@@ -44,7 +55,7 @@ int32 sys_write(fd_t fd, char *buf, u32 len)
 {
     if (fd == stdout || fd == stderr)
     {
-        return console_write(buf, len);
+        return console_write(NULL, buf, len);
     }
     panic("write!!!");
     return 0;

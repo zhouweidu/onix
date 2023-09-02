@@ -1,5 +1,6 @@
 [bits 32]
 
+extern device_init
 extern console_init
 extern gdt_init
 extern memory_init
@@ -15,6 +16,7 @@ _start:
     push ebx; ards_count
     push eax; magic
 
+    call device_init
     call console_init   ; 控制台初始化
 
     call gdt_init       ; 全局描述符初始化

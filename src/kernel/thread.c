@@ -61,19 +61,16 @@ void init_thread()
     //     set_interrupt_state(intr);
     // }
     char temp[100];
-    set_interrupt_state(true);
-    test();
     task_to_user_mode(user_init_thread);
 }
 
 void test_thread()
 {
     set_interrupt_state(true);
-    u32 counter = 0;
+    test();
+    LOGK("test finished of task %d\n",getpid());
     while (true)
     {
-        printf("test thread %d %d %d\n", getpid(), getppid(), counter++);
-        // LOGK("test task %d...\n", counter++);
-        sleep(2000);
+        sleep(10);
     }
 }
