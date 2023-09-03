@@ -1,0 +1,6 @@
+label: dos
+label-id: 0x00000000
+device: ../build/slave.img
+unit: sectors
+
+slave.img1 : start=        2048, size=       63472, type=83

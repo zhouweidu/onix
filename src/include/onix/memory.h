@@ -3,24 +3,35 @@
 
 #include <onix/types.h>
 
-// 内核页表索引
-static u32 KERNEL_PAGE_TABLE[] = {
-    0x2000,
-    0x3000,
-};
-
 #define PAGE_SIZE 0x1000     // 一页的大小，4K
 #define MEMORY_BASE 0x100000 // 1M 可用内存的开始位置
 
-#define KERNEL_PAGE_DIR 0x1000
+// 内核占用的内存大小 16M
+#define KERNEL_MEMORY_SIZE 0x1000000
 
-#define KERNEL_MEMORY_SIZE (0x100000 * sizeof(KERNEL_PAGE_TABLE))
+// 内核缓存地址
+#define KERNEL_BUFFER_MEM 0x800000
 
+// 内核缓存大小
+#define KERNEL_BUFFER_SIZE 0x400000
+
+// 内存虚拟磁盘地址
+#define KERNEL_RAMDISK_MEM (KERNEL_BUFFER_MEM + KERNEL_BUFFER_SIZE)
+
+// 内存虚拟磁盘大小
+#define KERNEL_RAMDISK_SIZE 0x400000
+
+//用户栈顶地址 128M
 #define USER_STACK_TOP 0x8000000
 
+//用户栈最大 2M
 #define USER_STACK_SIZE 0x200000
 
+//用户栈底地址 128-2
 #define USER_STACK_BOTTOM (USER_STACK_TOP - USER_STACK_SIZE)
+
+//内核页目录索引
+#define KERNEL_PAGE_DIR 0x1000
 
 typedef struct page_entry_t
 {

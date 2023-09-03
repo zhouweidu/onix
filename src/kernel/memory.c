@@ -16,9 +16,17 @@
 #define PAGE(idx) ((u32)idx << 12)             // 获取页索引 idx 对应的页开始的位置
 #define ASSERT_PAGE(addr) assert((addr & 0xfff) == 0)
 
-#define KERNEL_MAP_BITS 0x4000
-
 #define PDE_MASK 0xffc00000
+
+// 内核页表索引
+static u32 KERNEL_PAGE_TABLE[] = {
+    0x2000,
+    0x3000,
+    0x4000,
+    0x5000,
+};
+
+#define KERNEL_MAP_BITS 0x4000
 
 bitmap_t kernel_map;
 

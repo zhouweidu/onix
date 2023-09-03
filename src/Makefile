@@ -53,6 +53,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/ide.o \
 	$(BUILD)/kernel/memory.o \
 	$(BUILD)/kernel/keyboard.o \
+	$(BUILD)/kernel/buffer.o \
 	$(BUILD)/kernel/arena.o \
 	$(BUILD)/lib/bitmap.o \
 	$(BUILD)/lib/list.o \
@@ -72,57 +73,10 @@ $(BUILD)/system.bin: $(BUILD)/kernel.bin
 $(BUILD)/system.map: $(BUILD)/kernel.bin
 	nm $< | sort > $@
 
-$(BUILD)/master.img: $(BUILD)/boot/boot.bin \
-	$(BUILD)/boot/loader.bin\
-	$(BUILD)/system.bin\
-	$(BUILD)/system.map\
-	$(SRC)/utils/master.sfdisk\
-	
-	yes | bximage -hd=16M -mode=create -sectsize=512 -q $@
-	dd if=$(BUILD)/boot/boot.bin of=$@ bs=512 count=1 conv=notrunc
-	dd if=$(BUILD)/boot/loader.bin of=$@ bs=512 count=4 seek=2 conv=notrunc
-# 测试system.bin是否小于100K，否则就要修改下面的count
-	test -n "$$(find $(BUILD)/system.bin -size -100k)" 
-	dd if=$(BUILD)/system.bin of=$@ bs=512 count=200 seek=10 conv=notrunc
-	sfdisk $@ < $(SRC)/utils/master.sfdisk
-
-$(BUILD)/slave.img:
-	yes | bximage -q -hd=32 -mode=create -sectsize=512 -imgmode=flat $@
-
-
-IMAGES:= $(BUILD)/master.img $(BUILD)/slave.img
-
-image: $(IMAGES)
-
+include utils/image.mk
+include utils/cmd.mk
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILD)
 
-# 不要使用bochs，环境没配好
-.PHONY: bochs
-bochs: $(BUILD)/master.img
-	bochs -q
-
-QEMU:= qemu-system-i386 
-QEMU+= -m 32M 
-QEMU+= -soundhw pcspk 
-QEMU+= -rtc base=localtime 
-QEMU+= -drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw 
-QEMU+= -drive file=$(BUILD)/slave.img,if=ide,index=1,media=disk,format=raw 
-
-QEMU_DISK:= -boot c
-QEMU_DEBUG:= -s -S
-.PHONY: qemu
-qemu: $(IMAGES)
-	$(QEMU) $(QEMU_DISK)
-
-.PHONY: qemug
-qemug: $(IMAGES)
-	$(QEMU) $(QEMU_DEBUG)
-
-$(BUILD)/master.vmdk: $(BUILD)/master.img
-	qemu-img convert -O vmdk $< $@
-
-.PHONY: vmdk
-vmdk: $(BUILD)/master.vmdk
