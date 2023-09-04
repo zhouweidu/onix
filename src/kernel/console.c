@@ -161,7 +161,6 @@ int32 console_write(void *dev, char *buf, u32 count)
         case NUL:
             break;
         case BEL:
-            // TODO: \a
             // 蜂鸣器已经实现了
             start_beep();
             break;

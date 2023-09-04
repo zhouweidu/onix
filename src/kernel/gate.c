@@ -35,21 +35,14 @@ static u32 sys_test()
     char ch;
     device_t *device;
 
-    // device = device_find(DEV_KEYBOARD, 0);
-    // assert(device);
-    // device_read(device->dev, &ch, 1, 0, 0);
-
-    // device = device_find(DEV_CONSOLE, 0);
-    // assert(device);
-    // device_write(device->dev, &ch, 1, 0, 0);
-
-    device = device_find(DEV_IDE_DISK, 0);
+    device = device_find(DEV_KEYBOARD, 0);
     assert(device);
-    buffer_t *buf = bread(device->dev, 0);
-    char *data=buf->data+SECTOR_SIZE;
-    memset(data,0x5a,SECTOR_SIZE);
-    buf->dirty=true;
-    brelse(buf);
+    device_read(device->dev, &ch, 1, 0, 0);
+
+    device = device_find(DEV_CONSOLE, 0);
+    assert(device);
+    device_write(device->dev, &ch, 1, 0, 0);
+
     return 255;
 }
 

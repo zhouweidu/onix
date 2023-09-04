@@ -166,6 +166,7 @@ static request_t *request_nextreq(device_t *device, request_t *req)
 // 块设备请求
 void device_request(dev_t dev, void *buf, u8 count, idx_t idx, int flags, u32 type)
 {
+    //TODO:这里的offset的设置可以不需要吗，在device_read的时候有处理偏移
     device_t *device = device_get(dev);
     assert(device->type = DEV_BLOCK); // 是块设备
     idx_t offset = idx + device_ioctl(device->dev, DEV_CMD_SECTOR_START, 0, 0);

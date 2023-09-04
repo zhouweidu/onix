@@ -280,7 +280,7 @@ static void flush_tlb(u32 vaddr)
                  : "memory");
 }
 
-// 从位图中扫描 count 个连续的页
+// 从位图中扫描 count 个连续的页，位图是1-16MB内存位置
 static u32 scan_page(bitmap_t *map, u32 count)
 {
     assert(count > 0);
