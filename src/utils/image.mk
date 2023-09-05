@@ -12,13 +12,13 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	dd if=$(BUILD)/system.bin of=$@ bs=512 count=200 seek=10 conv=notrunc
 	sfdisk $@ < $(SRC)/utils/master.sfdisk
 # 挂载设备
-	sudo losetup /dev/loop21 --partscan $@
+	sudo losetup /dev/loop22 --partscan $@
 
 # 创建 minux 文件系统
-	sudo mkfs.minix -1 -n 14 /dev/loop21p1
+	sudo mkfs.minix -1 -n 14 /dev/loop22p1
 
 # 挂载文件系统
-	sudo mount /dev/loop21p1 /mnt
+	sudo mount /dev/loop22p1 /mnt
 
 # 切换所有者
 	sudo chown ${USER} /mnt 
@@ -34,19 +34,19 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	sudo umount /mnt
 
 # 卸载设备
-	sudo losetup -d /dev/loop21
+	sudo losetup -d /dev/loop22
 
 $(BUILD)/slave.img: $(SRC)/utils/slave.sfdisk
 	yes | bximage -hd=32M -mode=create -sectsize=512 -q $@
 	sfdisk $@ < $(SRC)/utils/slave.sfdisk
 # 挂载设备
-	sudo losetup /dev/loop21 --partscan $@
+	sudo losetup /dev/loop22 --partscan $@
 
 # 创建 minux 文件系统
-	sudo mkfs.minix -1 -n 14 /dev/loop21p1
+	sudo mkfs.minix -1 -n 14 /dev/loop22p1
 
 # 挂载文件系统
-	sudo mount /dev/loop21p1 /mnt
+	sudo mount /dev/loop22p1 /mnt
 
 # 切换所有者
 	sudo chown ${USER} /mnt 
@@ -58,7 +58,7 @@ $(BUILD)/slave.img: $(SRC)/utils/slave.sfdisk
 	sudo umount /mnt
 
 # 卸载设备
-	sudo losetup -d /dev/loop21
+	sudo losetup -d /dev/loop22
 
 .PHONY: mount0
 mount0: $(BUILD)/master.img
