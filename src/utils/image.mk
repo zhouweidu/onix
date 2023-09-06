@@ -62,23 +62,23 @@ $(BUILD)/slave.img: $(SRC)/utils/slave.sfdisk
 
 .PHONY: mount0
 mount0: $(BUILD)/master.img
-	sudo losetup /dev/loop21 --partscan $<
-	sudo mount /dev/loop21p1 /mnt
+	sudo losetup /dev/loop22 --partscan $<
+	sudo mount /dev/loop22p1 /mnt
 	sudo chown ${USER} /mnt 
 
 .PHONY: umount0
-umount0: /dev/loop21
+umount0: /dev/loop22
 	-sudo umount /mnt
 	-sudo losetup -d $<
 
 .PHONY: mount1
 mount1: $(BUILD)/slave.img
-	sudo losetup /dev/loop22 --partscan $<
-	sudo mount /dev/loop22p1 /mnt
+	sudo losetup /dev/loop23 --partscan $<
+	sudo mount /dev/loop23p1 /mnt
 	sudo chown ${USER} /mnt 
 
 .PHONY: umount1
-umount1: /dev/loop22
+umount1: /dev/loop23
 	-sudo umount /mnt
 	-sudo losetup -d $<
 

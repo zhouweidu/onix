@@ -105,13 +105,15 @@ static void mount_root()
     // 读根文件系统超级块
     root = read_super(device->dev);
 
-    device = device_find(DEV_IDE_PART, 1);
-    assert(device);
-    super_block_t *sb = read_super(device->dev);
-    idx_t idx = ialloc(sb->dev);
-    ifree(sb->dev, idx);
-    idx = balloc(sb->dev);
-    bfree(sb->dev, idx);
+    root->iroot = iget(device->dev, 1);
+    root->imount = iget(device->dev, 1);
+
+    idx_t idx = 0;
+    inode_t *inode = iget(device->dev, 1);
+    idx = bmap(inode, 3, true);
+    idx = bmap(inode, 7 + 7, true);
+    idx = bmap(inode, 7 + 512 * 3 + 510, true);
+    iput(inode);
 }
 
 void super_init()

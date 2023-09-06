@@ -132,6 +132,7 @@ buffer_t *getblk(dev_t dev, idx_t block)
     buffer_t *bf = get_from_hash_table(dev, block);
     if (bf)
     {
+        assert(bf->valid);
         bf->count++;
         return bf;
     }
@@ -156,7 +157,7 @@ buffer_t *bread(dev_t dev, idx_t block)
     {
         return bf;
     }
-    //避免同时读到缓冲无效对磁盘发两次请求
+    // 避免同时读到缓冲无效对磁盘发两次请求
     lock_acquire(&bf->lock);
 
     if (!bf->valid)
