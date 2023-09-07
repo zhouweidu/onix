@@ -6,6 +6,7 @@
 #include <onix/task.h>
 #include <onix/assert.h>
 #include <onix/debug.h>
+#include <onix/memory.h>
 
 bool permission(inode_t *inode, u16 mask)
 {
@@ -242,11 +243,12 @@ inode_t *namei(char *pathname)
 
 void dir_test()
 {
-    char pathname[] = "/";
-    char *name = NULL;
-    inode_t *inode = named(pathname, &name);
-    iput(inode);
-    inode = namei("/home/hello.txt");
-    LOGK("get inode %d\n", inode->nr);
-    iput(inode);
+    inode_t *inode = namei("d1/d2/../../hello.txt");
+    char *buf = (char *)alloc_kpage(1);
+    int i = inode_read(inode, buf, 1024, 0);
+    LOGK("content: %s\n", buf);
+    memset(buf, 'A', PAGE_SIZE);
+    inode_write(inode, buf, PAGE_SIZE, 0);
+    memset(buf, 'B', PAGE_SIZE);
+    inode_write(inode, buf, PAGE_SIZE, PAGE_SIZE);
 }
