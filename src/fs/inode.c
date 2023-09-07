@@ -111,6 +111,11 @@ void iput(inode_t *inode)
     if (!inode)
         return;
 
+    if (inode->buf->dirty)
+    {
+        bwrite(inode->buf);
+    }
+
     inode->count--;
 
     if (inode->count)

@@ -107,13 +107,6 @@ static void mount_root()
 
     root->iroot = iget(device->dev, 1);
     root->imount = iget(device->dev, 1);
-
-    idx_t idx = 0;
-    inode_t *inode = iget(device->dev, 1);
-    idx = bmap(inode, 3, true);
-    idx = bmap(inode, 7 + 7, true);
-    idx = bmap(inode, 7 + 512 * 3 + 510, true);
-    iput(inode);
 }
 
 void super_init()
