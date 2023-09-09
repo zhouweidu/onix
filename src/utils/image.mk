@@ -23,12 +23,13 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 # 切换所有者
 	sudo chown ${USER} /mnt 
 
+	mkdir -p /mnt/empty
 	mkdir -p /mnt/home
-	mkdir -p /mnt/d1/d2
+	mkdir -p /mnt/d1/d2/d3/d4
 
 # 创建文件
-	echo "master root direcotry file..." > /mnt/hello.txt
-	echo "master root direcotry file..." > /mnt/home/hello.txt
+	echo "master / direcotry file..." > /mnt/hello.txt
+	echo "master /home direcotry file..." > /mnt/home/hello.txt
 
 # 卸载文件系统
 	sudo umount /mnt

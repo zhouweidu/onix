@@ -150,6 +150,7 @@ static char *number(char *str, unsigned long num, int base, int size, int precis
 
 int vsprintf(char *buf, const char *fmt, va_list args)
 {
+    //printf("The price is %4d.", 14);
     int len;
     int i;
 

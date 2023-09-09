@@ -67,9 +67,14 @@ void init_thread()
 void test_thread()
 {
     set_interrupt_state(true);
-    test();
+    // mkdir("/world.txt", 0755);
+    // rmdir("/empty");
+    //新的文件名指向老文件
+    link("/hello.txt", "/world.txt");
+    unlink("/hello.txt");
     while (true)
     {
+        test();
         sleep(10);
     }
 }
