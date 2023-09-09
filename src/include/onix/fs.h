@@ -33,6 +33,20 @@
 #define P_READ IROTH
 #define P_WRITE IWOTH
 
+enum file_flag
+{
+    O_RDONLY = 00,      // 只读方式
+    O_WRONLY = 01,      // 只写方式
+    O_RDWR = 02,        // 读写方式
+    O_ACCMODE = 03,     // 文件访问模式屏蔽码
+    O_CREAT = 00100,    // 如果文件不存在就创建
+    O_EXCL = 00200,     // 独占使用文件标志
+    O_NOCTTY = 00400,   // 不分配控制终端
+    O_TRUNC = 01000,    // 若文件已存在且是写操作，则长度截为 0
+    O_APPEND = 02000,   // 以添加方式打开，文件指针置为文件尾
+    O_NONBLOCK = 04000, // 非阻塞方式打开和操作文件
+};
+
 typedef struct inode_desc_t
 {
     u16 mode;    // 文件类型和属性(rwx 位)
@@ -92,6 +106,15 @@ typedef struct dentry_t
     char name[14]; // 文件名
 } dentry_t;
 
+typedef struct file_t
+{
+    inode_t *inode; // 文件 inode
+    u32 count;      // 引用计数
+    off_t offset;   // 文件偏移
+    int flags;      // 文件标记
+    int mode;       // 文件模式
+} file_t;
+
 super_block_t *get_super(dev_t dev);  // 获得 dev 对应的超级块
 super_block_t *read_super(dev_t dev); // 读取 dev 对应的超级块
 
@@ -111,6 +134,9 @@ inode_t *new_inode(dev_t dev, idx_t nr); //创建新 inode
 
 inode_t *named(char *pathname, char **next); // 获取 pathname 对应的父目录 inode
 inode_t *namei(char *pathname);              // 获取 pathname 对应的 inode
+
+// 打开文件，返回 inode
+inode_t *inode_open(char *pathname, int flag, int mode);
 
 // 从 inode 的 offset 处，读 len 个字节到 buf
 int inode_read(inode_t *inode, char *buf, u32 len, off_t offset);

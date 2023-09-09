@@ -7,6 +7,7 @@
 #include <onix/stdio.h>
 #include <onix/arena.h>
 #include <onix/stdlib.h>
+#include <onix/fs.h>
 
 void idle_thread()
 {
@@ -25,25 +26,21 @@ void idle_thread()
 
 static void user_init_thread()
 {
-    u32 counter = 0;
-    int status;
+    char buf[256];
+    int len = 0;
+    fd_t fd = open("/hello.txt", O_RDWR, 0755);
+    len = read(fd, buf, sizeof(buf));
+    printf("hello.txt content: %s length %d\n", buf, len);
+    close(fd);
+
+    fd = open("/world.txt", O_CREAT | O_RDWR, 0755);
+    len = write(fd, buf, len);
     while (true)
     {
-        // pid_t pid = fork();
-        // if (pid)
-        // {
-        //     printf("fork after parent %d %d %d\n", pid, getpid(), getppid());
-        //     // sleep(1000);
-        //     pid_t child = waitpid(pid, &status);
-        //     printf("wait pid %d status %d %d\n", child, status, time());
-        // }
-        // else
-        // {
-        //     printf("fork after child %d %d %d\n", pid, getpid(), getppid());
-        //     sleep(1000);
-        //     exit(0);
-        // }
-        sleep(1000);
+        char ch;
+        read(stdin, &ch, 1);
+        write(stdout, &ch, 1);
+        sleep(10);
     }
 }
 
@@ -67,11 +64,6 @@ void init_thread()
 void test_thread()
 {
     set_interrupt_state(true);
-    // mkdir("/world.txt", 0755);
-    // rmdir("/empty");
-    //新的文件名指向老文件
-    link("/hello.txt", "/world.txt");
-    unlink("/hello.txt");
     while (true)
     {
         test();

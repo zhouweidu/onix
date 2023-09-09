@@ -8,10 +8,9 @@
 #include <onix/device.h>
 #include <onix/string.h>
 #include <onix/buffer.h>
+#include <onix/fs.h>
 
 #define SYSCALL_SIZE 256
-
-extern int32 console_write(void *dev, char *buf, u32 count);
 
 handler_t syscall_table[SYSCALL_SIZE];
 
@@ -32,36 +31,34 @@ task_t *task = NULL;
 
 static u32 sys_test()
 {
-    char ch;
-    device_t *device;
+    // char ch;
+    // device_t *device;
 
-    device = device_find(DEV_KEYBOARD, 0);
-    assert(device);
-    device_read(device->dev, &ch, 1, 0, 0);
+    // device = device_find(DEV_KEYBOARD, 0);
+    // assert(device);
+    // device_read(device->dev, &ch, 1, 0, 0);
 
-    device = device_find(DEV_CONSOLE, 0);
-    assert(device);
-    device_write(device->dev, &ch, 1, 0, 0);
+    // device = device_find(DEV_CONSOLE, 0);
+    // assert(device);
+    // device_write(device->dev, &ch, 1, 0, 0);
 
     return 255;
 }
 
-int32 sys_write(fd_t fd, char *buf, u32 len)
-{
-    if (fd == stdout || fd == stderr)
-    {
-        return console_write(NULL, buf, len);
-    }
-    panic("write!!!");
-    return 0;
-}
-
 extern time_t sys_time();
 extern mode_t sys_umask(mode_t mask);
+
 extern int sys_mkdir(char *pathname, int mode);
 extern int sys_rmdir(char *pathname);
-extern int sys_link();
-extern int sys_unlink();
+extern int sys_link(char *oldname, char *newname);
+extern int sys_unlink(char *filename);
+
+extern fd_t sys_open(char *filename, int flags, int mode);
+extern fd_t sys_creat(char *filename, int mode);
+extern fd_t sys_close(fd_t fd);
+
+extern int sys_read(fd_t fd, char *buf, int count);
+extern int sys_write(fd_t fd, char *buf, int count);
 
 void syscall_init()
 {
@@ -81,10 +78,15 @@ void syscall_init()
 
     syscall_table[SYS_NR_BRK] = sys_brk;
 
+    syscall_table[SYS_NR_READ] = sys_read;
     syscall_table[SYS_NR_WRITE] = sys_write;
 
     syscall_table[SYS_NR_MKDIR] = sys_mkdir;
     syscall_table[SYS_NR_RMDIR] = sys_rmdir;
+
+    syscall_table[SYS_NR_OPEN] = sys_open;
+    syscall_table[SYS_NR_CREAT] = sys_creat;
+    syscall_table[SYS_NR_CLOSE] = sys_close;
 
     syscall_table[SYS_NR_LINK] = sys_link;
     syscall_table[SYS_NR_UNLINK] = sys_unlink;

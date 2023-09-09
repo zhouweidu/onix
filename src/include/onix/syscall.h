@@ -8,8 +8,12 @@ typedef enum syscall_t
     SYS_NR_TEST,
     SYS_NR_EXIT = 1,
     SYS_NR_FORK = 2,
+    SYS_NR_READ = 3,
     SYS_NR_WRITE = 4,
+    SYS_NR_OPEN = 5,
+    SYS_NR_CLOSE = 6,
     SYS_NR_WAITPID = 7,
+    SYS_NR_CREAT = 8,
     SYS_NR_LINK = 9,
     SYS_NR_UNLINK = 10,
     SYS_NR_TIME = 13,
@@ -37,7 +41,15 @@ pid_t getppid();
 
 int32 brk(void *addr);
 
-int32 write(fd_t fd, char *buf, u32 len);
+// 打开文件
+fd_t open(char *filename, int flags, int mode);
+// 创建普通文件
+fd_t creat(char *filename, int mode);
+// 关闭文件
+void close(fd_t fd);
+
+int read(fd_t fd, char *buf, int len);
+int write(fd_t fd, char *buf, int len);
 
 // 创建目录
 int mkdir(char *pathname, int mode);
