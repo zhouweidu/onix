@@ -3,9 +3,6 @@
 #include <onix/device.h>
 #include <onix/assert.h>
 #include <onix/string.h>
-#include <onix/task.h>
-#include <onix/syscall.h>
-#include <onix/stdlib.h>
 #include <onix/debug.h>
 
 #define SUPER_NR 16
@@ -47,7 +44,6 @@ super_block_t *read_super(dev_t dev)
     super_block_t *sb = get_super(dev);
     if (sb)
     {
-        sb->count++;
         return sb;
     }
 
@@ -62,7 +58,6 @@ super_block_t *read_super(dev_t dev)
     sb->buf = buf;
     sb->desc = (super_desc_t *)buf->data;
     sb->dev = dev;
-    sb->count = 1;
 
     assert(sb->desc->magic == MINIX1_MAGIC);
 
@@ -105,8 +100,9 @@ static void mount_root()
     // 读根文件系统超级块
     root = read_super(device->dev);
 
-    root->iroot = iget(device->dev, 1);
-    root->imount = iget(device->dev, 1);
+    // 初始化根目录 inode
+    root->iroot = iget(device->dev, 1);  // 获得根目录 inode
+    root->imount = iget(device->dev, 1); // 根目录挂载 inode
 }
 
 void super_init()

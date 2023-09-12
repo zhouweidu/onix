@@ -6,9 +6,13 @@
 #include <onix/task.h>
 #include <onix/assert.h>
 #include <onix/debug.h>
-#include <onix/memory.h>
+#include <onix/stat.h>
 
-bool permission(inode_t *inode, u16 mask)
+#define P_EXEC IXOTH
+#define P_READ IROTH
+#define P_WRITE IWOTH
+
+static bool permission(inode_t *inode, u16 mask)
 {
     u16 mode = inode->desc->mode;
 
@@ -55,15 +59,6 @@ static buffer_t *find_entry(inode_t **dir, const char *name, char **next, dentry
     // 保证 dir 是目录
     assert(ISDIR((*dir)->desc->mode));
 
-    if (match_name(name, "..", next) && (*dir)->nr == 1)
-    {
-        super_block_t *sb = get_super((*dir)->dev);
-        inode_t *inode = *dir;
-        (*dir) = sb->imount;
-        (*dir)->count++;
-        iput(inode);
-    }
-
     // 获取目录所在超级块
     // super_block_t *sb = read_super((*dir)->dev);
 
@@ -87,7 +82,7 @@ static buffer_t *find_entry(inode_t **dir, const char *name, char **next, dentry
             buf = bread((*dir)->dev, block);
             entry = (dentry_t *)buf->data;
         }
-        if (match_name(name, entry->name, next) && entry->nr)
+        if (match_name(name, entry->name, next))
         {
             *result = entry;
             return buf;
@@ -272,10 +267,14 @@ int sys_mkdir(char *pathname, int mode)
     entry->nr = ialloc(dir->dev);
 
     task_t *task = running_task();
-    inode_t *inode = new_inode(dir->dev, entry->nr);
+    inode_t *inode = iget(dir->dev, entry->nr);
+    inode->buf->dirty = true;
 
+    inode->desc->gid = task->gid;
+    inode->desc->uid = task->uid;
     inode->desc->mode = (mode & 0777 & ~task->umask) | IFDIR;
     inode->desc->size = sizeof(dentry_t) * 2; // 当前目录和父目录两个目录项
+    inode->desc->mtime = time();              // 时间戳
     inode->desc->nlinks = 2;                  // 一个是 '.' 一个是 name
 
     // 父目录链接数加 1
@@ -518,9 +517,7 @@ int sys_unlink(char *filename)
 
     if (inode->desc->nlinks == 0)
     {
-        // 清除inode的zone
         inode_truncate(inode);
-        // 清除inode位图
         ifree(inode->dev, inode->nr);
     }
 
@@ -566,7 +563,7 @@ inode_t *inode_open(char *pathname, int flag, int mode)
 
     buf = add_entry(dir, name, &entry);
     entry->nr = ialloc(dir->dev);
-    inode = new_inode(dir->dev, entry->nr);
+    inode = iget(dir->dev, entry->nr);
 
     task_t *task = running_task();
 
@@ -582,7 +579,10 @@ inode_t *inode_open(char *pathname, int flag, int mode)
     inode->buf->dirty = true;
 
 makeup:
-    if (ISDIR(inode->desc->mode) || !permission(inode, flag & O_ACCMODE))
+    if (!permission(inode, flag & O_ACCMODE))
+        goto rollback;
+
+    if (ISDIR(inode->desc->mode) && ((flag & O_ACCMODE) != O_RDONLY))
         goto rollback;
 
     inode->atime = time();
@@ -599,4 +599,119 @@ rollback:
     iput(dir);
     iput(inode);
     return NULL;
+}
+
+char *sys_getcwd(char *buf, size_t size)
+{
+    task_t *task = running_task();
+    strncpy(buf, task->pwd, size);
+    return buf;
+}
+
+// 计算 当前路径 pwd 和新路径 pathname, 存入 pwd
+void abspath(char *pwd, const char *pathname)
+{
+    char *cur = NULL;
+    char *ptr = NULL;
+    if (IS_SEPARATOR(pathname[0]))
+    {
+        cur = pwd + 1;
+        *cur = 0;
+        pathname++;
+    }
+    else
+    {
+        cur = strrsep(pwd) + 1;
+        *cur = 0;
+    }
+
+    while (pathname[0])
+    {
+        ptr = strsep(pathname);
+        if (!ptr)
+        {
+            break;
+        }
+
+        int len = (ptr - pathname) + 1;
+        *ptr = '/';
+        if (!memcmp(pathname, "./", 2))
+        {
+            /* code */
+        }
+        else if (!memcmp(pathname, "../", 3))
+        {
+            if (cur - 1 != pwd)
+            {
+                *(cur - 1) = 0;
+                cur = strrsep(pwd) + 1;
+                *cur = 0;
+            }
+        }
+        else
+        {
+            strncpy(cur, pathname, len + 1);
+            cur += len;
+        }
+        pathname += len;
+    }
+
+    if (!pathname[0])
+        return;
+
+    if (!strcmp(pathname, "."))
+        return;
+
+    if (strcmp(pathname, ".."))
+    {
+        strcpy(cur, pathname);
+        cur += strlen(pathname);
+        *cur = '/';
+        return;
+    }
+    if (cur - 1 != pwd)
+    {
+        *(cur - 1) = 0;
+        cur = strrsep(pwd) + 1;
+        *cur = 0;
+    }
+}
+
+int sys_chdir(char *pathname)
+{
+    task_t *task = running_task();
+    inode_t *inode = namei(pathname);
+    if (!inode)
+        goto rollback;
+    if (!ISDIR(inode->desc->mode) || inode == task->ipwd)
+        goto rollback;
+
+    abspath(task->pwd, pathname);
+
+    iput(task->ipwd);
+    task->ipwd = inode;
+    return 0;
+
+rollback:
+    iput(inode);
+    return EOF;
+}
+
+int sys_chroot(char *pathname)
+{
+    task_t *task = running_task();
+    inode_t *inode = namei(pathname);
+
+    if (!inode)
+        goto rollback;
+    if (!ISDIR(inode->desc->mode) || inode == task->iroot)
+        goto rollback;
+
+    iput(task->iroot);
+    task->iroot = inode;
+    return 0;
+
+rollback:
+    iput(inode);
+    return EOF;
 }

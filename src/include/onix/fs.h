@@ -115,6 +115,15 @@ typedef struct file_t
     int mode;       // 文件模式
 } file_t;
 
+typedef dentry_t dirent_t;
+
+typedef enum whence_t
+{
+    SEEK_SET = 1, // 直接设置偏移
+    SEEK_CUR,     // 当前位置偏移
+    SEEK_END      // 结束位置偏移
+} whence_t;
+
 super_block_t *get_super(dev_t dev);  // 获得 dev 对应的超级块
 super_block_t *read_super(dev_t dev); // 读取 dev 对应的超级块
 
@@ -130,7 +139,7 @@ idx_t bmap(inode_t *inode, idx_t block, bool create);
 inode_t *get_root_inode();               // 获取根目录 inode
 inode_t *iget(dev_t dev, idx_t nr);      // 获得设备 dev 的 nr inode
 void iput(inode_t *inode);               // 释放 inode
-inode_t *new_inode(dev_t dev, idx_t nr); //创建新 inode
+inode_t *new_inode(dev_t dev, idx_t nr); // 创建新 inode
 
 inode_t *named(char *pathname, char **next); // 获取 pathname 对应的父目录 inode
 inode_t *namei(char *pathname);              // 获取 pathname 对应的 inode

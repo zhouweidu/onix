@@ -7,9 +7,7 @@
 #include <onix/arena.h>
 #include <onix/string.h>
 #include <onix/stdlib.h>
-#include <onix/memory.h>
-#include <onix/task.h>
-#include <onix/fifo.h>
+#include <onix/stat.h>
 
 #define INODE_NR 64
 
@@ -76,6 +74,7 @@ inode_t *iget(dev_t dev, idx_t nr)
     {
         inode->count++;
         inode->atime = time();
+
         return inode;
     }
 
@@ -87,7 +86,7 @@ inode_t *iget(dev_t dev, idx_t nr)
     inode = get_free_inode();
     inode->dev = dev;
     inode->nr = nr;
-    inode->count++;
+    inode->count ++;
 
     // 加入超级块 inode 链表
     list_push(&sb->inode_list, &inode->node);
@@ -106,30 +105,13 @@ inode_t *iget(dev_t dev, idx_t nr)
     return inode;
 }
 
-inode_t *new_inode(dev_t dev, idx_t nr)
-{
-    task_t *task = running_task();
-    inode_t *inode = iget(dev, nr);
-    // assert(inode->desc->nlinks == 0);
-
-    inode->buf->dirty = true;
-
-    inode->desc->mode = 0777 & (~task->umask);
-    inode->desc->uid = task->uid;
-    inode->desc->size = 0;
-    inode->desc->mtime = inode->atime = time();
-    inode->desc->gid = task->gid;
-    inode->desc->nlinks = 1;
-
-    return inode;
-}
-
 // 释放 inode
 void iput(inode_t *inode)
 {
     if (!inode)
         return;
 
+    // TODO: need write... ?
     if (inode->buf->dirty)
     {
         bwrite(inode->buf);
@@ -179,7 +161,7 @@ int inode_read(inode_t *inode, char *buf, u32 len, off_t offset)
     u32 left = MIN(len, inode->desc->size - offset);
     while (left)
     {
-        // 找到对应的文件偏移，所在文件块
+        // 找到对应的文件便宜，所在文件块
         idx_t nr = bmap(inode, offset / BLOCK_SIZE, false);
         assert(nr);
 

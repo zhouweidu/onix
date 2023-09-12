@@ -16,7 +16,7 @@
 #define PAGE(idx) ((u32)idx << 12)             // 获取页索引 idx 对应的页开始的位置
 #define ASSERT_PAGE(addr) assert((addr & 0xfff) == 0)
 
-#define PDE_MASK 0xffc00000
+#define PDE_MASK 0xFFC00000
 
 // 内核页表索引
 static u32 KERNEL_PAGE_TABLE[] = {
@@ -26,7 +26,7 @@ static u32 KERNEL_PAGE_TABLE[] = {
     0x5000,
 };
 
-#define KERNEL_MAP_BITS 0x4000
+#define KERNEL_MAP_BITS 0x6000
 
 bitmap_t kernel_map;
 
@@ -47,13 +47,12 @@ static u32 free_pages = 0;  // 空闲内存页数
 void memory_init(u32 magic, u32 addr)
 {
     u32 count = 0;
-    ards_t *ptr;
 
     // 如果是 onix loader 进入的内核
     if (magic == ONIX_MAGIC)
     {
         count = *(u32 *)addr;
-        ptr = (ards_t *)(addr + 4);
+        ards_t *ptr = (ards_t *)(addr + 4);
 
         for (size_t i = 0; i < count; i++, ptr++)
         {
@@ -91,8 +90,8 @@ void memory_init(u32 magic, u32 addr)
     }
 }
 
-static u32 start_page = 0;   // 可分配物理内存起始位置，起始页号
-static u8 *memory_map;       // 物理内存数组用来管理每一个页
+static u32 start_page = 0;   // 可分配物理内存起始位置
+static u8 *memory_map;       // 物理内存数组
 static u32 memory_map_pages; // 物理内存数组占用的页数
 
 void memory_map_init()
@@ -100,7 +99,7 @@ void memory_map_init()
     // 初始化物理内存数组
     memory_map = (u8 *)memory_base;
 
-    // 计算物理内存数组占用的页数，占用了2页
+    // 计算物理内存数组占用的页数
     memory_map_pages = div_round_up(total_pages, PAGE_SIZE);
     LOGK("Memory map page count %d\n", memory_map_pages);
 
@@ -118,13 +117,13 @@ void memory_map_init()
 
     LOGK("Total pages %d free pages %d\n", total_pages, free_pages);
 
-    // 初始化内核虚拟内存位图，需要 8 位对齐，是针对页的索引（页号）的位图，也就是高20位
+    // 初始化内核虚拟内存位图，需要 8 位对齐
     u32 length = (IDX(KERNEL_MEMORY_SIZE) - IDX(MEMORY_BASE)) / 8;
     bitmap_init(&kernel_map, (u8 *)KERNEL_MAP_BITS, length, IDX(MEMORY_BASE));
     bitmap_scan(&kernel_map, memory_map_pages);
 }
 
-// 分配一页物理内存 8M以上
+// 分配一页物理内存
 static u32 get_page()
 {
     for (size_t i = start_page; i < total_pages; i++)
@@ -133,8 +132,8 @@ static u32 get_page()
         if (!memory_map[i])
         {
             memory_map[i] = 1;
-            assert(free_pages > 0);
             free_pages--;
+            assert(free_pages >= 0);
             u32 page = PAGE(i);
             LOGK("GET page 0x%p\n", page);
             return page;
@@ -143,7 +142,7 @@ static u32 get_page()
     panic("Out of Memory!!!");
 }
 
-// 释放一页物理内存，addr是物理地址
+// 释放一页物理内存
 static void put_page(u32 addr)
 {
     ASSERT_PAGE(addr);
@@ -153,7 +152,7 @@ static void put_page(u32 addr)
     // idx 大于 1M 并且 小于 总页面数
     assert(idx >= start_page && idx < total_pages);
 
-    // 保证至少有一个引用
+    // 保证只有一个引用
     assert(memory_map[idx] >= 1);
 
     // 物理引用减一
@@ -169,16 +168,21 @@ static void put_page(u32 addr)
     LOGK("PUT page 0x%p\n", addr);
 }
 
+// 得到 cr2 寄存器
 u32 get_cr2()
 {
+    // 直接将 mov eax, cr2，返回值在 eax 中
     asm volatile("movl %cr2, %eax\n");
 }
 
+// 得到 cr3 寄存器
 u32 get_cr3()
 {
+    // 直接将 mov eax, cr3，返回值在 eax 中
     asm volatile("movl %cr3, %eax\n");
 }
 
+// 设置 cr3 寄存器，参数是页目录的地址
 void set_cr3(u32 pde)
 {
     ASSERT_PAGE(pde);
@@ -218,7 +222,7 @@ void mapping_init()
     {
         page_entry_t *pte = (page_entry_t *)KERNEL_PAGE_TABLE[didx];
         memset(pte, 0, PAGE_SIZE);
-        
+
         page_entry_t *dentry = &pde[didx];
         entry_init(dentry, IDX((u32)pte));
 
@@ -259,7 +263,7 @@ static page_entry_t *get_pte(u32 vaddr, bool create)
     page_entry_t *entry = &pde[idx];
 
     assert(create || (!create && entry->present));
-    
+
     page_entry_t *table = (page_entry_t *)(PDE_MASK | (idx << 12));
 
     if (!entry->present)
@@ -273,14 +277,14 @@ static page_entry_t *get_pte(u32 vaddr, bool create)
     return table;
 }
 
-// 刷新虚拟地址 vaddr 的 快表 TLB
+// 刷新虚拟地址 vaddr 的 块表 TLB
 static void flush_tlb(u32 vaddr)
 {
     asm volatile("invlpg (%0)" ::"r"(vaddr)
                  : "memory");
 }
 
-// 从位图中扫描 count 个连续的页，位图是1-16MB内存位置
+// 从位图中扫描 count 个连续的页
 static u32 scan_page(bitmap_t *map, u32 count)
 {
     assert(count > 0);
@@ -328,18 +332,13 @@ void free_kpage(u32 vaddr, u32 count)
     LOGK("FREE  kernel pages 0x%p count %d\n", vaddr, count);
 }
 
-page_entry_t *get_entry(u32 vaddr, bool create)
-{
-    page_entry_t *pte = get_pte(vaddr, create);
-    return &pte[TIDX(vaddr)];
-}
-
 // 将 vaddr 映射物理内存
 void link_page(u32 vaddr)
 {
     ASSERT_PAGE(vaddr);
 
-    page_entry_t *entry = get_entry(vaddr, true);
+    page_entry_t *pte = get_pte(vaddr, true);
+    page_entry_t *entry = &pte[TIDX(vaddr)];
 
     task_t *task = running_task();
     bitmap_t *map = task->vmap;
@@ -354,6 +353,7 @@ void link_page(u32 vaddr)
 
     assert(!bitmap_test(map, index));
     bitmap_set(map, index, true);
+
     u32 paddr = get_page();
     entry_init(entry, IDX(paddr));
     flush_tlb(vaddr);
@@ -387,7 +387,6 @@ void unlink_page(u32 vaddr)
     u32 paddr = PAGE(entry->index);
 
     DEBUGK("UNLINK from 0x%p to 0x%p\n", vaddr, paddr);
-
     put_page(paddr);
 
     flush_tlb(vaddr);
@@ -400,18 +399,21 @@ static u32 copy_page(void *page)
 
     page_entry_t *entry = get_pte(0, false);
     entry_init(entry, IDX(paddr));
-
     memcpy((void *)0, (void *)page, PAGE_SIZE);
 
     entry->present = false;
     return paddr;
 }
 
+// 拷贝当前页目录
 page_entry_t *copy_pde()
 {
     task_t *task = running_task();
+
     page_entry_t *pde = (page_entry_t *)alloc_kpage(1);
     memcpy(pde, (void *)task->pde, PAGE_SIZE);
+
+    // 将最后一个页表指向页目录自己，方便修改
     page_entry_t *entry = &pde[1023];
     entry_init(entry, IDX(pde));
 
@@ -433,16 +435,14 @@ page_entry_t *copy_pde()
 
             // 对应物理内存引用大于 0
             assert(memory_map[entry->index] > 0);
-            //置为只读
+            // 置为只读
             entry->write = false;
-
             // 对应物理页引用加 1
             memory_map[entry->index]++;
 
             assert(memory_map[entry->index] < 255);
         }
 
-        // 必须在虚拟内存允许的方式下拷贝一页内存，物理内存必须8M以上
         u32 paddr = copy_page(pte);
         dentry->index = IDX(paddr);
     }
@@ -452,6 +452,7 @@ page_entry_t *copy_pde()
     return pde;
 }
 
+// 释放当前页目录
 void free_pde()
 {
     task_t *task = running_task();
@@ -490,6 +491,36 @@ void free_pde()
     LOGK("free pages %d\n", free_pages);
 }
 
+int32 sys_brk(void *addr)
+{
+    LOGK("task brk 0x%p\n", addr);
+    u32 brk = (u32)addr;
+    ASSERT_PAGE(brk);
+
+    task_t *task = running_task();
+    assert(task->uid != KERNEL_USER);
+
+    assert(KERNEL_MEMORY_SIZE <= brk && brk < USER_STACK_BOTTOM);
+
+    u32 old_brk = task->brk;
+
+    if (old_brk > brk)
+    {
+        for (u32 page = brk; page < old_brk; page += PAGE_SIZE)
+        {
+            unlink_page(page);
+        }
+    }
+    else if (IDX(brk - old_brk) > free_pages)
+    {
+        // out of memory
+        return -1;
+    }
+
+    task->brk = brk;
+    return 0;
+}
+
 typedef struct page_error_code_t
 {
     u8 present : 1;
@@ -522,12 +553,12 @@ void page_fault(
 
     if (code->present)
     {
-        // 写时复制
         assert(code->write);
 
-        page_entry_t *entry = get_entry(vaddr, false);
+        page_entry_t *pte = get_pte(vaddr, false);
+        page_entry_t *entry = &pte[TIDX(vaddr)];
 
-        assert(entry->present); // 目前写内存应该是存在的
+        assert(entry->present);
         assert(memory_map[entry->index] > 0);
         if (memory_map[entry->index] == 1)
         {
@@ -554,36 +585,5 @@ void page_fault(
         return;
     }
 
-    LOGK("task 0x%p name %s brk 0x%p page fault\n", task, task->name, task->brk);
     panic("page fault!!!");
-}
-
-int32 sys_brk(void *addr)
-{
-    LOGK("task brk 0x%p\n", addr);
-    u32 brk = (u32)addr;
-    ASSERT_PAGE(brk);
-
-    task_t *task = running_task();
-    assert(task->uid != KERNEL_USER);
-
-    assert(KERNEL_MEMORY_SIZE <= brk && brk < USER_STACK_BOTTOM);
-
-    u32 old_brk = task->brk;
-
-    if (old_brk > brk)
-    {
-        for (u32 page = brk; page < old_brk; page += PAGE_SIZE)
-        {
-            unlink_page(page);
-        }
-    }
-    else if (IDX(brk - old_brk) > free_pages)
-    {
-        // out of memory
-        return -1;
-    }
-
-    task->brk = brk;
-    return 0;
 }

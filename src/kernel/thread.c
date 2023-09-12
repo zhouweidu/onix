@@ -8,6 +8,7 @@
 #include <onix/arena.h>
 #include <onix/stdlib.h>
 #include <onix/fs.h>
+#include <onix/string.h>
 
 void idle_thread()
 {
@@ -24,39 +25,28 @@ void idle_thread()
     }
 }
 
+extern void osh_main();
+
 static void user_init_thread()
 {
-    char buf[256];
-    int len = 0;
-    fd_t fd = open("/hello.txt", O_RDWR, 0755);
-    len = read(fd, buf, sizeof(buf));
-    printf("hello.txt content: %s length %d\n", buf, len);
-    close(fd);
-
-    fd = open("/world.txt", O_CREAT | O_RDWR, 0755);
-    len = write(fd, buf, len);
     while (true)
     {
-        char ch;
-        read(stdin, &ch, 1);
-        write(stdout, &ch, 1);
-        sleep(10);
+        u32 status;
+        pid_t pid = fork();
+        if (pid)
+        {
+            pid_t child = waitpid(pid, &status);
+            printf("wait pid %d status %d %d\n", child, status, time());
+        }
+        else
+        {
+            osh_main();
+        }
     }
 }
 
 void init_thread()
 {
-    // set_interrupt_state(true);
-    // u32 counter = 0;
-    // char ch;
-    // while (true)
-    // {
-    //     bool intr=interrupt_disable();
-    //     keyboard_read(&ch, 1);
-    //     printk("%c",ch);
-    //     // LOGK("init task %d...\n", counter++);
-    //     set_interrupt_state(intr);
-    // }
     char temp[100];
     task_to_user_mode(user_init_thread);
 }
@@ -66,7 +56,7 @@ void test_thread()
     set_interrupt_state(true);
     while (true)
     {
-        test();
+        // test();
         sleep(10);
     }
 }
