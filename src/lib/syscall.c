@@ -155,6 +155,11 @@ int unlink(char *filename)
     return _syscall1(SYS_NR_UNLINK, (u32)filename);
 }
 
+int mknod(char *filename, int mode, int dev)
+{
+    return _syscall3(SYS_NR_MKNOD, (u32)filename, (u32)mode, (u32)dev);
+}
+
 time_t time()
 {
     return _syscall0(SYS_NR_TIME);
@@ -168,4 +173,14 @@ mode_t umask(mode_t mask)
 void clear()
 {
     _syscall0(SYS_NR_CLEAR);
+}
+
+int stat(char *filename, stat_t *statbuf)
+{
+    return _syscall2(SYS_NR_STAT, (u32)filename, (u32)statbuf);
+}
+
+int fstat(fd_t fd, stat_t *statbuf)
+{
+    return _syscall2(SYS_NR_FSTAT, (u32)fd, (u32)statbuf);
 }
