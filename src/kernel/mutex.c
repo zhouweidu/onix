@@ -13,8 +13,6 @@ void mutex_init(mutex_t *mutex)
 void mutex_lock(mutex_t *mutex)
 {
     // 关闭中断，保证原子操作
-    //第一个 开
-    //第二个 开
     bool intr = interrupt_disable();
 
     task_t *current = running_task();

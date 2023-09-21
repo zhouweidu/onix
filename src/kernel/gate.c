@@ -61,6 +61,9 @@ extern int sys_fstat(fd_t fd, stat_t *statbuf);
 
 extern int sys_mknod(char *filename, int mode, int dev);
 
+extern int sys_mount();
+extern int sys_umount();
+
 void syscall_init()
 {
     for (size_t i = 0; i < SYSCALL_SIZE; i++)
@@ -108,4 +111,7 @@ void syscall_init()
     syscall_table[SYS_NR_FSTAT] = sys_fstat;
 
     syscall_table[SYS_NR_MKNOD] = sys_mknod;
+
+    syscall_table[SYS_NR_MOUNT] = sys_mount;
+    syscall_table[SYS_NR_UMOUNT] = sys_umount;
 }
