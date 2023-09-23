@@ -9,8 +9,8 @@ int printf(const char *fmt, ...)
     va_list args;
     int i;
     va_start(args, fmt);
-    i=vsprintf(buf,fmt,args);
+    i = vsprintf(buf, fmt, args);
     va_end(args);
-    write(stdout,buf,i);
+    write(STDOUT_FILENO, buf, i);
     return i;
 }

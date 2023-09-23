@@ -156,4 +156,10 @@ int inode_write(inode_t *inode, char *buf, u32 len, off_t offset);
 // 释放 inode 所有文件块
 void inode_truncate(inode_t *inode);
 
+file_t *get_file();
+void put_file(file_t *file);
+
+// 格式化文件系统
+int devmkfs(dev_t dev, u32 icount);
+
 #endif

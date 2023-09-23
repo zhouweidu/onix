@@ -209,7 +209,7 @@ void builtin_cat(int argc, char *argv[])
         {
             break;
         }
-        write(stdout, buf, len);
+        write(STDOUT_FILENO, buf, len);
     }
     close(fd);
 }
@@ -263,6 +263,15 @@ void builtin_umount(int argc, char *argv[])
         return;
     }
     umount(argv[1]);
+}
+
+void builtin_mkfs(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
+        return;
+    }
+    mkfs(argv[1], 0);
 }
 
 static void execute(int argc, char *argv[])
@@ -329,6 +338,11 @@ static void execute(int argc, char *argv[])
     {
         return builtin_umount(argc, argv);
     }
+    if (!strcmp(line, "mkfs"))
+    {
+        return builtin_mkfs(argc, argv);
+    }
+
     printf("osh: command not found: %s\n", argv[0]);
 }
 
@@ -341,7 +355,7 @@ void readline(char *buf, u32 count)
     while (idx < count)
     {
         ptr = buf + idx;
-        int ret = read(stdin, ptr, 1);
+        int ret = read(STDIN_FILENO, ptr, 1);
         if (ret == -1)
         {
             *ptr = 0;
@@ -353,20 +367,20 @@ void readline(char *buf, u32 count)
         case '\r':
             *ptr = 0;
             ch = '\n';
-            write(stdout, &ch, 1);
+            write(STDOUT_FILENO, &ch, 1);
             return;
         case '\b':
             if (buf[0] != '\b')
             {
                 idx--;
                 ch = '\b';
-                write(stdout, &ch, 1);
+                write(STDOUT_FILENO, &ch, 1);
             }
             break;
         case '\t':
             continue;
         default:
-            write(stdout, ptr, 1);
+            write(STDOUT_FILENO, ptr, 1);
             idx++;
             break;
         }
