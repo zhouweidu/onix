@@ -21,16 +21,25 @@
 // 内存虚拟磁盘大小
 #define KERNEL_RAMDISK_SIZE 0x400000
 
-//用户栈顶地址 128M
-#define USER_STACK_TOP 0x8000000
+// 用户程序地址
+#define USER_EXEC_ADDR KERNEL_MEMORY_SIZE
 
-//用户栈最大 2M
+// 用户映射内存开始位置
+#define USER_MMAP_ADDR 0x8000000
+
+// 用户映射内存大小
+#define USER_MMAP_SIZE 0x8000000
+
+// 用户栈顶地址 256M
+#define USER_STACK_TOP 0x10000000
+
+// 用户栈最大 2M
 #define USER_STACK_SIZE 0x200000
 
-//用户栈底地址 128-2
+// 用户栈底地址
 #define USER_STACK_BOTTOM (USER_STACK_TOP - USER_STACK_SIZE)
 
-//内核页目录索引
+// 内核页目录索引
 #define KERNEL_PAGE_DIR 0x1000
 
 typedef struct page_entry_t
@@ -59,6 +68,12 @@ u32 alloc_kpage(u32 count);
 
 // 释放 count 个连续的内核页
 void free_kpage(u32 vaddr, u32 count);
+
+// 获取页表项
+page_entry_t *get_entry(u32 vaddr, bool create);
+
+// 刷新快表
+void flush_tlb(u32 vaddr);
 
 void link_page(u32 vaddr);
 

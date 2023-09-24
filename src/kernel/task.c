@@ -282,7 +282,7 @@ void task_to_user_mode(target_t target)
     task->vmap = kmalloc(sizeof(bitmap_t));
     // 一页内存按位算只能表示128MB的空间
     void *buf = (void *)alloc_kpage(1);
-    bitmap_init(task->vmap, buf, PAGE_SIZE, KERNEL_MEMORY_SIZE / PAGE_SIZE);
+    bitmap_init(task->vmap, buf, USER_MMAP_SIZE / PAGE_SIZE / 8, USER_MMAP_ADDR / PAGE_SIZE);
 
     task->pde = (u32)copy_pde();
     set_cr3(task->pde);

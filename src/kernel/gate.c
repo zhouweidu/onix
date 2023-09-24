@@ -52,8 +52,6 @@ extern int sys_unlink(char *filename);
 extern time_t sys_time();
 extern mode_t sys_umask(mode_t mask);
 
-extern int32 sys_brk(void *addr);
-
 extern void console_clear();
 
 extern int sys_stat(char *filename, stat_t *statbuf);
@@ -64,7 +62,11 @@ extern int sys_mknod(char *filename, int mode, int dev);
 extern int sys_mount(char *devname, char *dirname, int flags);
 extern int sys_umount(char *target);
 
-extern int sys_mkfs();
+extern int32 sys_brk(void *addr);
+extern int sys_mmap();
+extern int sys_munmap();
+
+extern int sys_mkfs(char *devname, int icount);
 
 void syscall_init()
 {
@@ -83,6 +85,8 @@ void syscall_init()
     syscall_table[SYS_NR_GETPPID] = sys_getppid;
 
     syscall_table[SYS_NR_BRK] = sys_brk;
+    syscall_table[SYS_NR_MMAP] = sys_mmap;
+    syscall_table[SYS_NR_MUNMAP] = sys_munmap;
 
     syscall_table[SYS_NR_READ] = sys_read;
     syscall_table[SYS_NR_WRITE] = sys_write;
