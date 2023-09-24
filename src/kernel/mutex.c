@@ -16,6 +16,7 @@ void mutex_lock(mutex_t *mutex)
     bool intr = interrupt_disable();
 
     task_t *current = running_task();
+    //有可能醒来会被别的进程抢到锁，所以要用while
     while (mutex->value == true)
     {
         // 若 value 为 true，表示已经被别人持有

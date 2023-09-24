@@ -29,10 +29,6 @@
 
 #define ACC_MODE(x) ("\004\002\006\377"[(x) & O_ACCMODE])
 
-#define P_EXEC IXOTH
-#define P_READ IROTH
-#define P_WRITE IWOTH
-
 enum file_flag
 {
     O_RDONLY = 00,      // 只读方式
@@ -161,5 +157,11 @@ void put_file(file_t *file);
 
 // 格式化文件系统
 int devmkfs(dev_t dev, u32 icount);
+
+#define P_EXEC IXOTH
+#define P_READ IROTH
+#define P_WRITE IWOTH
+
+bool permission(inode_t *inode, u16 mask);
 
 #endif

@@ -2,6 +2,7 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	$(BUILD)/boot/loader.bin\
 	$(BUILD)/system.bin\
 	$(BUILD)/system.map\
+	$(BUILD)/builtin/hello.out\
 	$(SRC)/utils/master.sfdisk\
 	
 	yes | bximage -hd=16M -mode=create -sectsize=512 -q $@
@@ -28,6 +29,8 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 
 # 创建文件
 	echo "master / direcotry file..." > /mnt/hello.txt
+
+	cp $(BUILD)/builtin/hello.out /mnt/hello.out
 
 # 卸载文件系统
 	sudo umount /mnt

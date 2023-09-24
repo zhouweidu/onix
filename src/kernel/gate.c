@@ -4,6 +4,7 @@
 #include <onix/syscall.h>
 #include <onix/task.h>
 #include <onix/fs.h>
+#include <onix/device.h>
 
 #define SYSCALL_SIZE 256
 
@@ -26,9 +27,25 @@ task_t *task = NULL;
 
 static u32 sys_test()
 {
-    LOGK("sys_test called!!!\n");
+    // LOGK("sys_test called!!!\n");
+    char ch;
+    device_t *device;
+    device_t *serial = device_find(DEV_SERIAL, 0);
+    assert(serial);
+    device_t *keyboard = device_find(DEV_KEYBOARD, 0);
+    assert(keyboard);
+
+    device_t *console = device_find(DEV_CONSOLE, 0);
+    assert(console);
+    device_read(keyboard->dev, &ch, 1, 0, 0);
+    // device_read(serial->dev, &ch, 1, 0, 0);
+    device_write(serial->dev, &ch, 1, 0, 0);
+    device_write(console->dev, &ch, 1, 0, 0);
+
     return 255;
 }
+
+extern void sys_execve();
 
 extern int sys_read(fd_t fd, char *buf, int count);
 extern int sys_write(fd_t fd, char *buf, int count);
@@ -63,8 +80,8 @@ extern int sys_mount(char *devname, char *dirname, int flags);
 extern int sys_umount(char *target);
 
 extern int32 sys_brk(void *addr);
-extern int sys_mmap();
-extern int sys_munmap();
+extern int sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+extern int sys_munmap(void *addr, size_t length);
 
 extern int sys_mkfs(char *devname, int icount);
 
@@ -75,9 +92,13 @@ void syscall_init()
         syscall_table[i] = sys_default;
     }
     syscall_table[SYS_NR_TEST] = sys_test;
+
     syscall_table[SYS_NR_EXIT] = task_exit;
     syscall_table[SYS_NR_FORK] = task_fork;
     syscall_table[SYS_NR_WAITPID] = task_waitpid;
+
+    syscall_table[SYS_NR_EXECVE] = sys_execve;
+
     syscall_table[SYS_NR_SLEEP] = task_sleep;
     syscall_table[SYS_NR_YIELD] = task_yield;
 

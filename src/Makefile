@@ -29,6 +29,8 @@ $(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
 	gcc $(CFLAGS) $(DEBUG) $(INCLUDE) -c $< -o $@
 
+$(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o
+	ld -m elf_i386 -static $^ -o $@ -Ttext 0x1001000
 
 $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/start.o \
@@ -52,11 +54,13 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/rtc.o \
 	$(BUILD)/kernel/ramdisk.o \
 	$(BUILD)/kernel/ide.o \
+	$(BUILD)/kernel/serial.o \
 	$(BUILD)/kernel/memory.o \
 	$(BUILD)/kernel/keyboard.o \
 	$(BUILD)/kernel/buffer.o \
 	$(BUILD)/kernel/arena.o \
 	$(BUILD)/kernel/system.o \
+	$(BUILD)/kernel/execve.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \
