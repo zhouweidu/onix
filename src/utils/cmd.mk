@@ -11,10 +11,10 @@ QEMU+= -drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw
 QEMU+= -drive file=$(BUILD)/slave.img,if=ide,index=1,media=disk,format=raw 
 QEMU+= -chardev stdio,mux=on,id=com1 # 字符设备 1
 # QEMU+= -chardev udp,id=com1,port=6666,ipv4=on # 字符设备 1
-QEMU+= -chardev vc,mux=on,id=com2 # 字符设备 2
+# QEMU+= -chardev vc,mux=on,id=com2 # 字符设备 2
 # QEMU+= -chardev udp,id=com2,port=7777,ipv4=on # 字符设备 2
 QEMU+= -serial chardev:com1 # 串口 1
-QEMU+= -serial chardev:com2 # 串口 2
+# QEMU+= -serial chardev:com2 # 串口 2
 
 QEMU_DISK_BOOT:= -boot c
 QEMU_DEBUG:= -s -S

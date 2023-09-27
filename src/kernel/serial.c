@@ -65,8 +65,7 @@ void recv_data(serial_t *serial)
 // 中断处理函数
 void serial_handler(int vector)
 {
-    // 4-0
-    // 3-1
+    // TODO: 这里的serials[4-irq]和视频不一样
     u32 irq = vector - 0x20;
     assert(irq == IRQ_SERIAL_1 || irq == IRQ_SERIAL_2);
     send_eoi(vector);

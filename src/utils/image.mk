@@ -1,3 +1,4 @@
+# TODO: 这里的master.img的输入文件（依赖文件）和视频不一样，多了个hello.out
 $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	$(BUILD)/boot/loader.bin\
 	$(BUILD)/system.bin\
