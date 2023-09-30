@@ -76,31 +76,6 @@ void builtin_logo()
 
 void builtin_test(int argc, char *argv[])
 {
-    printf("osh test starting...\n");
-    int status = 0;
-    fd_t pipefd[2];
-
-    int result = pipe(pipefd);
-    pid_t pid = fork();
-    if (pid)
-    {
-        char buf[128];
-        printf("--%d-- getting message\n", getpid());
-        int len = read(pipefd[0], buf, 24);
-        printf("--%d-- getting message: %s count %d\n", getpid(), buf, len);
-        pid_t child = waitpid(pid, &status);
-        close(pipefd[0]);
-        close(pipefd[1]);
-    }
-    else
-    {
-        char *message = "pipe written message!!!";
-        printf("--%d-- put message: %s\n", getpid(), message);
-        write(pipefd[1], message, 24);
-        close(pipefd[0]);
-        close(pipefd[1]);
-        exit(0);
-    }
 }
 
 void builtin_pwd()
@@ -313,7 +288,7 @@ pid_t builtin_command(char *filename, char *argv[], fd_t infd, fd_t outfd, fd_t 
         fd_t fd = dup2(errfd, STDERR_FILENO);
         close(errfd);
     }
-
+    // execve函数不会返回，反则出错
     int i = execve(filename, argv, envp);
     exit(i);
 }
@@ -536,9 +511,8 @@ static int cmd_parse(char *cmd, char *argv[])
     return argc;
 }
 
-int osh_main()
+int main()
 {
-    // builtin_test(0, NULL);
     memset(cmd, 0, sizeof(cmd));
     memset(cwd, 0, sizeof(cwd));
 

@@ -43,11 +43,14 @@ $(BUILD)/lib/libc.o: $(BUILD)/lib/crt.o \
 	ld -m elf_i386 -r $^ -o $@
 
 BUILTIN_APPS := \
+	$(BUILD)/builtin/init.out \
+	$(BUILD)/builtin/osh.out \
 	$(BUILD)/builtin/env.out \
 	$(BUILD)/builtin/echo.out \
 	$(BUILD)/builtin/cat.out \
 	$(BUILD)/builtin/ls.out \
 	$(BUILD)/builtin/dup.out \
+	$(BUILD)/builtin/err.out \
 
 $(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o\
 	$(BUILD)/lib/libc.o\
@@ -99,7 +102,6 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/stdlib.o \
 	$(BUILD)/lib/syscall.o \
 	$(BUILD)/lib/printf.o \
-	$(BUILD)/builtin/osh.o \
 
 	$(shell mkdir -p $(dir $@))
 	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)
