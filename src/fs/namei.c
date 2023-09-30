@@ -91,7 +91,7 @@ static buffer_t *find_entry(inode_t **dir, const char *name, char **next, dentry
             buf = bread((*dir)->dev, block);
             entry = (dentry_t *)buf->data;
         }
-        if (match_name(name, entry->name, next))
+        if (match_name(name, entry->name, next) && entry->nr)
         {
             *result = entry;
             return buf;
@@ -576,7 +576,7 @@ inode_t *inode_open(char *pathname, int flag, int mode)
     inode->desc->mode = mode;
 
 makeup:
-    if (!permission(inode, flag & O_ACCMODE))
+    if (!permission(inode, ACC_MODE(flag & O_ACCMODE)))
         goto rollback;
 
     if (ISDIR(inode->desc->mode) && ((flag & O_ACCMODE) != O_RDONLY))

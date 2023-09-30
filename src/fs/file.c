@@ -102,7 +102,12 @@ int sys_read(fd_t fd, char *buf, int count)
         return EOF;
 
     inode_t *inode = file->inode;
-    if (ISCHR(inode->desc->mode))
+    if (inode->pipe)
+    {
+        len = pipe_read(inode, buf, count);
+        return len;
+    }
+    else if (ISCHR(inode->desc->mode))
     {
         assert(inode->desc->zone[0]);
         len = device_read(inode->desc->zone[0], buf, count, 0, 0);
@@ -142,7 +147,12 @@ int sys_write(fd_t fd, char *buf, int count)
     inode_t *inode = file->inode;
     assert(inode);
 
-    if (ISCHR(inode->desc->mode))
+    if (inode->pipe)
+    {
+        len = pipe_write(inode, buf, count);
+        return len;
+    }
+    else if (ISCHR(inode->desc->mode))
     {
         assert(inode->desc->zone[0]);
         device_t *device = device_get(inode->desc->zone[0]);
@@ -205,4 +215,35 @@ int sys_lseek(fd_t fd, off_t offset, whence_t whence)
 int sys_readdir(fd_t fd, dirent_t *dir, u32 count)
 {
     return sys_read(fd, (char *)dir, sizeof(dirent_t));
+}
+
+static int dupfd(fd_t fd, fd_t arg)
+{
+    task_t *task = running_task();
+    if (fd >= TASK_FILE_NR || !task->files[fd])
+        return EOF;
+
+    for (; arg < TASK_FILE_NR; arg++)
+    {
+        if (!task->files[arg])
+            break;
+    }
+
+    if (arg >= TASK_FILE_NR)
+        return EOF;
+
+    task->files[arg] = task->files[fd];
+    task->files[arg]->count++;
+    return arg;
+}
+
+fd_t sys_dup(fd_t oldfd)
+{
+    return dupfd(oldfd, 0);
+}
+
+fd_t sys_dup2(fd_t oldfd, fd_t newfd)
+{
+    close(newfd);
+    return dupfd(oldfd, newfd);
 }

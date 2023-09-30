@@ -394,7 +394,7 @@ static u32 copy_argv_envp(char *filename, char *argv[], char *envp[])
     return (u32)utop;
 }
 
-extern int sys_brk();
+extern int32 sys_brk(void *addr);
 
 int sys_execve(char *filename, char *argv[], char *envp[])
 {
@@ -415,7 +415,7 @@ int sys_execve(char *filename, char *argv[], char *envp[])
     strncpy(task->name, filename, TASK_NAME_LEN);
 
     // 处理参数和环境变量
-    // u32 top = copy_argv_envp(filename, argv, envp);
+    u32 top = copy_argv_envp(filename, argv, envp);
 
     // 首先释放原程序的堆内存
     task->end = USER_EXEC_ADDR;
@@ -436,7 +436,7 @@ int sys_execve(char *filename, char *argv[], char *envp[])
 
     iframe->edx = 0; // TODO 动态链接器的地址
     iframe->eip = entry;
-    iframe->esp = (u32)USER_STACK_TOP;
+    iframe->esp = top;
 
     // ROP 技术，直接从中断返回
     // 通过 eip 跳转到 entry 执行

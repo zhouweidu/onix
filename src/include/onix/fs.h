@@ -62,7 +62,7 @@ typedef struct inode_t
     idx_t nr;                // i 节点号
     u32 count;               // 引用计数
     time_t atime;            // 访问时间
-    time_t ctime;            // 修改时间
+    time_t ctime;            // 创建时间
     list_node_t node;        // 链表结点
     dev_t mount;             // 安装设备
     struct task_t *rxwaiter; // 读等待进程
@@ -163,5 +163,11 @@ int devmkfs(dev_t dev, u32 icount);
 #define P_WRITE IWOTH
 
 bool permission(inode_t *inode, u16 mask);
+
+inode_t *get_pipe_inode(); // 获取管道 inode
+// 管道读
+int pipe_read(inode_t *inode, char *buf, int count);
+// 管道写
+int pipe_write(inode_t *inode, char *buf, int count);
 
 #endif

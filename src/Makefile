@@ -10,6 +10,7 @@ CFLAGS+= -fno-pic #不需要位置无关代码
 CFLAGS+= -fno-pie 
 CFLAGS+= -nostdlib 
 CFLAGS+= -fno-stack-protector
+CFLAGS+= -DONIX
 CFLAGS:=$(strip ${CFLAGS}) 
 
 
@@ -29,7 +30,28 @@ $(BUILD)/%.o: $(SRC)/%.c
 	$(shell mkdir -p $(dir $@))
 	gcc $(CFLAGS) $(DEBUG) $(INCLUDE) -c $< -o $@
 
-$(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o
+$(BUILD)/lib/libc.o: $(BUILD)/lib/crt.o \
+	$(BUILD)/lib/crt1.o \
+	$(BUILD)/lib/string.o \
+	$(BUILD)/lib/vsprintf.o \
+	$(BUILD)/lib/stdlib.o \
+	$(BUILD)/lib/syscall.o \
+	$(BUILD)/lib/printf.o \
+	$(BUILD)/lib/assert.o \
+	$(BUILD)/lib/time.o \
+
+	ld -m elf_i386 -r $^ -o $@
+
+BUILTIN_APPS := \
+	$(BUILD)/builtin/env.out \
+	$(BUILD)/builtin/echo.out \
+	$(BUILD)/builtin/cat.out \
+	$(BUILD)/builtin/ls.out \
+	$(BUILD)/builtin/dup.out \
+
+$(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o\
+	$(BUILD)/lib/libc.o\
+
 	ld -m elf_i386 -static $^ -o $@ -Ttext 0x1001000
 
 $(BUILD)/kernel.bin: \
@@ -68,6 +90,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/fs/file.o \
 	$(BUILD)/fs/stat.o \
 	$(BUILD)/fs/dev.o \
+	$(BUILD)/fs/pipe.o \
 	$(BUILD)/lib/bitmap.o \
 	$(BUILD)/lib/list.o \
 	$(BUILD)/lib/fifo.o \

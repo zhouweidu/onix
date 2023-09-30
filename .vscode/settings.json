@@ -9,6 +9,8 @@
         "syscall.h": "c",
         "cstdio": "c",
         "fs.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "stat.h": "c",
+        "fifo.h": "c"
     }
 }

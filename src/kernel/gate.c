@@ -45,7 +45,12 @@ static u32 sys_test()
     return 255;
 }
 
-extern void sys_execve();
+extern int sys_execve(char *filename, char *argv[], char *envp[]);
+
+extern fd_t sys_dup(fd_t oldfd);
+extern fd_t sys_dup2(fd_t oldfd, fd_t newfd);
+
+extern int sys_pipe(fd_t pipefd[2]);
 
 extern int sys_read(fd_t fd, char *buf, int count);
 extern int sys_write(fd_t fd, char *buf, int count);
@@ -108,6 +113,11 @@ void syscall_init()
     syscall_table[SYS_NR_BRK] = sys_brk;
     syscall_table[SYS_NR_MMAP] = sys_mmap;
     syscall_table[SYS_NR_MUNMAP] = sys_munmap;
+
+    syscall_table[SYS_NR_DUP] = sys_dup;
+    syscall_table[SYS_NR_DUP2] = sys_dup2;
+
+    syscall_table[SYS_NR_PIPE] = sys_pipe;
 
     syscall_table[SYS_NR_READ] = sys_read;
     syscall_table[SYS_NR_WRITE] = sys_write;
