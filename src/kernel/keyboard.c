@@ -6,6 +6,7 @@
 #include <onix/mutex.h>
 #include <onix/task.h>
 #include <onix/device.h>
+#include <onix/errno.h>
 
 #define KEYBOARD_DATA_PORT 0x60
 #define KEYBOARD_CTRL_PORT 0x64
@@ -403,7 +404,7 @@ void keyboard_handler(int vector)
     fifo_put(&fifo, ch);
     if (waiter != NULL)
     {
-        task_unblock(waiter);
+        task_unblock(waiter, EOK);
         waiter = NULL;
     }
 }
@@ -417,7 +418,7 @@ u32 keyboard_read(void *dev, char *buf, u32 count)
         while (fifo_empty(&fifo))
         {
             waiter = running_task();
-            task_block(waiter, NULL, TASK_BLOCKED);
+            task_block(waiter, NULL, TASK_BLOCKED, TIMELESS);
         }
         buf[nr++] = fifo_get(&fifo);
     }
@@ -441,8 +442,7 @@ void keyboard_init()
     set_interrupt_handler(IRQ_KEYBOARD, keyboard_handler);
     set_interrupt_mask(IRQ_KEYBOARD, true);
     device_install(
-        DEV_CHAR,DEV_KEYBOARD,
-        NULL,"keyboard",0,
-        NULL,keyboard_read,NULL
-    );
+        DEV_CHAR, DEV_KEYBOARD,
+        NULL, "keyboard", 0,
+        NULL, keyboard_read, NULL);
 }

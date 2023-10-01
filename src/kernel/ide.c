@@ -9,6 +9,7 @@
 #include <onix/assert.h>
 #include <onix/debug.h>
 #include <onix/device.h>
+#include <onix/errno.h>
 
 // IDE 寄存器基址
 #define IDE_IOBASE_PRIMARY 0x1F0   // 主通道基地址
@@ -126,7 +127,7 @@ static void ide_handler(int vector)
     if (ctrl->waiter)
     {
         // 如果有进程阻塞，则取消阻塞
-        task_unblock(ctrl->waiter);
+        task_unblock(ctrl->waiter, EOK);
         ctrl->waiter = NULL;
     }
 }
@@ -270,7 +271,7 @@ int ide_pio_read(ide_disk_t *disk, void *buf, u8 count, idx_t lba)
         if (task->state == TASK_RUNNING)
         {
             ctrl->waiter = task;
-            task_block(task, NULL, TASK_BLOCKED);
+            task_block(task, NULL, TASK_BLOCKED, TIMELESS);
         }
         ide_busy_wait(ctrl, IDE_SR_DRQ);
         u32 offset = ((u32)buf + i * SECTOR_SIZE);
@@ -314,7 +315,7 @@ int ide_pio_write(ide_disk_t *disk, void *buf, u8 count, idx_t lba)
         if (task->state == TASK_RUNNING)
         {
             ctrl->waiter = task;
-            task_block(task, NULL, TASK_BLOCKED);
+            task_block(task, NULL, TASK_BLOCKED, TIMELESS);
         }
         ide_busy_wait(ctrl, IDE_SR_NULL);
     }
@@ -505,7 +506,7 @@ static void ide_ctrl_init()
                 disk->selector = IDE_LBA_MASTER;
             }
             ide_identify(disk, buf);
-            ide_part_init(disk,buf);
+            ide_part_init(disk, buf);
         }
     }
     free_kpage((u32)buf, 1);

@@ -13,7 +13,7 @@
 
 static char cwd[MAX_PATH_LEN];
 static char cmd[MAX_CMD_LEN];
-static char *argv[MAX_ARG_NR];
+static char *args[MAX_ARG_NR];
 static char buf[BUFLEN];
 
 static char *envp[] = {
@@ -539,13 +539,13 @@ int main()
         {
             continue;
         }
-        int argc = cmd_parse(cmd, argv);
+        int argc = cmd_parse(cmd, args);
         // argv最后一个需要为NULL所以不能有16个参数，最多15个
         if (argc < 0 || argc >= MAX_ARG_NR)
         {
             continue;
         }
-        execute(argc, argv);
+        execute(argc, args);
     }
     return 0;
 }

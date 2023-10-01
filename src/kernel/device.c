@@ -4,6 +4,7 @@
 #include <onix/assert.h>
 #include <onix/debug.h>
 #include <onix/arena.h>
+#include <onix/errno.h>
 
 static device_t devices[DEVICE_NR]; // 设备数组
 
@@ -166,7 +167,7 @@ static request_t *request_nextreq(device_t *device, request_t *req)
 // 块设备请求
 void device_request(dev_t dev, void *buf, u8 count, idx_t idx, int flags, u32 type)
 {
-    //TODO:这里的offset的设置可以不需要吗，在device_read的时候有处理偏移，经过测试可以不需要
+    // TODO:这里的offset的设置可以不需要吗，在device_read的时候有处理偏移，经过测试可以不需要
     device_t *device = device_get(dev);
     assert(device->type = DEV_BLOCK); // 是块设备
     idx_t offset = idx + device_ioctl(device->dev, DEV_CMD_SECTOR_START, 0, 0);
@@ -201,7 +202,7 @@ void device_request(dev_t dev, void *buf, u8 count, idx_t idx, int flags, u32 ty
     if (!empty)
     {
         req->task = running_task();
-        task_block(req->task, NULL, TASK_BLOCKED);
+        task_block(req->task, NULL, TASK_BLOCKED, TIMELESS);
     }
 
     do_request(req);
@@ -214,6 +215,6 @@ void device_request(dev_t dev, void *buf, u8 count, idx_t idx, int flags, u32 ty
     if (nextreq)
     {
         assert(nextreq->task->magic == ONIX_MAGIC);
-        task_unblock(nextreq->task);
+        task_unblock(nextreq->task, EOK);
     }
 }

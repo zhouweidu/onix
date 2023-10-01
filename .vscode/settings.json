@@ -12,6 +12,8 @@
         "time.h": "c",
         "stat.h": "c",
         "fifo.h": "c",
-        "printk.h": "c"
+        "printk.h": "c",
+        "errno.h": "c",
+        "device.h": "c"
     }
 }

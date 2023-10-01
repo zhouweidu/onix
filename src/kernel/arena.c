@@ -18,6 +18,7 @@ void arena_init()
         arena_descriptor_t *desc = &descriptors[i];
         desc->block_size = block_size;
         desc->total_block = (PAGE_SIZE - sizeof(arena_t)) / block_size;
+        desc->page_count = 0;
         list_init(&desc->free_list);
         block_size <<= 1; // block *= 2;
     }
@@ -48,6 +49,8 @@ void *kmalloc(size_t size)
     {
         u32 asize = size + sizeof(arena_t);
         u32 count = div_round_up(asize, PAGE_SIZE);
+
+        desc->page_count++;
 
         arena = (arena_t *)alloc_kpage(count);
         memset(arena, 0, count * PAGE_SIZE);
@@ -119,8 +122,8 @@ void kfree(void *ptr)
     list_push(&arena->desc->free_list, block);
     arena->count++;
 
-    //预留一些页不释放提升性能
-    if (arena->count == arena->desc->total_block)
+    // 预留一些页不释放提升性能
+    if (arena->count == arena->desc->total_block && arena->desc->page_count > BUF_COUNT)
     {
         for (size_t i = 0; i < arena->desc->total_block; i++)
         {
@@ -130,5 +133,7 @@ void kfree(void *ptr)
             assert(!list_search(&arena->desc->free_list, block));
         }
         free_kpage((u32)arena, 1);
+        arena->desc->page_count--;
+        assert(arena->desc->page_count >= BUF_COUNT);
     }
 }
