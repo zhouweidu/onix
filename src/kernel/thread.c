@@ -2,6 +2,9 @@
 #include <onix/syscall.h>
 #include <onix/debug.h>
 #include <onix/task.h>
+#include <onix/stdio.h>
+
+extern int main();
 
 void idle_thread()
 {
@@ -18,11 +21,32 @@ void idle_thread()
     }
 }
 
+extern int main();
+
+int init_user_thread()
+{
+    while (true)
+    {
+        u32 status;
+        pid_t pid = fork();
+        if (pid)
+        {
+            pid_t child = waitpid(pid, &status);
+            printf("wait pid %d status %d %d\n", child, status, time());
+        }
+        else
+        {
+            main();
+        }
+    }
+    return 0;
+}
+
 extern void dev_init();
 
 void init_thread()
 {
-    char temp[100];//为栈顶留有足够空间
+    char temp[100]; // 为栈顶留有足够空间
     dev_init();
     task_to_user_mode();
 }

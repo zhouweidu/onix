@@ -11,6 +11,7 @@ CFLAGS+= -fno-pie
 CFLAGS+= -nostdlib 
 CFLAGS+= -fno-stack-protector
 CFLAGS+= -DONIX
+CFLAGS+= -DONIX_DEBUG
 CFLAGS:=$(strip ${CFLAGS}) 
 
 
@@ -102,6 +103,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/stdlib.o \
 	$(BUILD)/lib/syscall.o \
 	$(BUILD)/lib/printf.o \
+	$(BUILD)/builtin/osh.o \
 
 	$(shell mkdir -p $(dir $@))
 	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)

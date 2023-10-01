@@ -28,20 +28,6 @@ task_t *task = NULL;
 static u32 sys_test()
 {
     // LOGK("sys_test called!!!\n");
-    char ch;
-    device_t *device;
-    device_t *serial = device_find(DEV_SERIAL, 0);
-    assert(serial);
-    device_t *keyboard = device_find(DEV_KEYBOARD, 0);
-    assert(keyboard);
-
-    device_t *console = device_find(DEV_CONSOLE, 0);
-    assert(console);
-    device_read(keyboard->dev, &ch, 1, 0, 0);
-    // device_read(serial->dev, &ch, 1, 0, 0);
-    device_write(serial->dev, &ch, 1, 0, 0);
-    device_write(console->dev, &ch, 1, 0, 0);
-
     return 255;
 }
 
@@ -73,8 +59,6 @@ extern int sys_unlink(char *filename);
 
 extern time_t sys_time();
 extern mode_t sys_umask(mode_t mask);
-
-extern void console_clear();
 
 extern int sys_stat(char *filename, stat_t *statbuf);
 extern int sys_fstat(fd_t fd, stat_t *statbuf);
@@ -141,8 +125,6 @@ void syscall_init()
     syscall_table[SYS_NR_CHDIR] = sys_chdir;
     syscall_table[SYS_NR_CHROOT] = sys_chroot;
     syscall_table[SYS_NR_GETCWD] = sys_getcwd;
-
-    syscall_table[SYS_NR_CLEAR] = console_clear;
 
     syscall_table[SYS_NR_STAT] = sys_stat;
     syscall_table[SYS_NR_FSTAT] = sys_fstat;
