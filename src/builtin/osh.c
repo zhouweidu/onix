@@ -455,6 +455,8 @@ void readline(char *buf, u32 count)
         }
         switch (*ptr)
         {
+        case '\0':
+            return;
         case '\n':
         case '\r':
             *ptr = 0;

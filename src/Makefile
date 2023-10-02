@@ -85,6 +85,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/serial.o \
 	$(BUILD)/kernel/memory.o \
 	$(BUILD)/kernel/keyboard.o \
+	$(BUILD)/kernel/tty.o \
 	$(BUILD)/kernel/buffer.o \
 	$(BUILD)/kernel/arena.o \
 	$(BUILD)/kernel/system.o \
@@ -97,6 +98,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/fs/stat.o \
 	$(BUILD)/fs/dev.o \
 	$(BUILD)/fs/pipe.o \
+	$(BUILD)/fs/ioctl.o \
 	$(BUILD)/lib/bitmap.o \
 	$(BUILD)/lib/list.o \
 	$(BUILD)/lib/fifo.o \

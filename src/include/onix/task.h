@@ -40,6 +40,7 @@ typedef struct task_t
     pid_t ppid;                         // 父任务id
     pid_t pgid;                         // 进程组
     pid_t sid;                          // 进程会话
+    dev_t tty;                          // tty设备
     u32 pde;                            // 页目录物理地址
     struct bitmap_t *vmap;              // 进程虚拟内存位图
     u32 text;                           // 代码段地址

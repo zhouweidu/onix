@@ -27,11 +27,14 @@ typedef enum syscall_t
     SYS_NR_MOUNT = 21,
     SYS_NR_UMOUNT = 22,
     SYS_NR_FSTAT = 28,
+    SYS_NR_STTY = 31,
+    SYS_NR_GTTY = 32,
     SYS_NR_MKDIR = 39,
     SYS_NR_RMDIR = 40,
     SYS_NR_DUP = 41,
     SYS_NR_PIPE = 42,
     SYS_NR_BRK = 45,
+    SYS_NR_IOCTL = 54,
     SYS_NR_SETPGID = 57,
     SYS_NR_UMASK = 60,
     SYS_NR_CHROOT = 61,
@@ -82,7 +85,7 @@ pid_t setpgrp();
 int setpgid(int pid, int pgid);
 // 获得进程组id
 pid_t getpgrp();
-// 设置会话id进程组id
+// 设置会话id进程组id为当前进程的id
 pid_t setsid();
 
 int32 brk(void *addr);

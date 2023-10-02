@@ -13,6 +13,8 @@
 #include <onix/buffer.h>
 #include <onix/errno.h>
 #include <onix/timer.h>
+#include <onix/device.h>
+#include <onix/tty.h>
 
 extern u32 volatile jiffies;
 extern u32 jiffy;
@@ -420,6 +422,14 @@ void task_exit(int status)
     if (task_leader(task))
     {
         // TODO
+    }
+
+    // 释放tty设备
+    if (task_leader(task) && task->tty > 0)
+    {
+        device_t *device = device_get(task->tty);
+        tty_t *tty = (tty_t *)device->ptr;
+        tty->pgid = 0;
     }
 
     timer_remove(task);
