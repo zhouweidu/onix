@@ -14,6 +14,8 @@
         "fifo.h": "c",
         "printk.h": "c",
         "errno.h": "c",
-        "device.h": "c"
+        "device.h": "c",
+        "io.h": "c",
+        "task.h": "c"
     }
 }

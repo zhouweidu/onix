@@ -72,6 +72,10 @@ extern int32 sys_brk(void *addr);
 extern int sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 extern int sys_munmap(void *addr, size_t length);
 
+extern int sys_setpgid();
+extern int sys_setsid();
+extern int sys_getpgrp();
+
 extern int sys_mkfs(char *devname, int icount);
 
 void syscall_init()
@@ -93,6 +97,10 @@ void syscall_init()
 
     syscall_table[SYS_NR_GETPID] = sys_getpid;
     syscall_table[SYS_NR_GETPPID] = sys_getppid;
+
+    syscall_table[SYS_NR_SETPGID] = sys_setpgid;
+    syscall_table[SYS_NR_GETPGRP] = sys_getpgrp;
+    syscall_table[SYS_NR_SETSID] = sys_setsid;
 
     syscall_table[SYS_NR_BRK] = sys_brk;
     syscall_table[SYS_NR_MMAP] = sys_mmap;
