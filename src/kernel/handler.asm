@@ -2,6 +2,7 @@
 ; 中断处理函数入口 
 
 extern handler_table
+extern task_signal
 
 section .text
 
@@ -32,6 +33,8 @@ global interrupt_exit
 interrupt_exit:
 
     add esp, 4
+
+    call task_signal
 
     popa
     pop gs

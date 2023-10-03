@@ -1,5 +1,4 @@
 #include <onix/task.h>
-#include <onix/printk.h>
 #include <onix/debug.h>
 #include <onix/memory.h>
 #include <onix/assert.h>
@@ -44,6 +43,19 @@ static task_t *get_free_task()
         }
     }
     panic("No more tasks");
+}
+
+// 获得 pid 对应的 task
+task_t *get_task(pid_t pid)
+{
+    for (size_t i = 0; i < TASK_NR; i++)
+    {
+        if (!task_table[i])
+            continue;
+        if (task_table[i]->pid == pid)
+            return task_table[i];
+    }
+    return NULL;
 }
 
 pid_t sys_getpid()
@@ -266,6 +278,18 @@ static task_t *task_create(target_t target, const char *name, u32 priority, u32 
     task->files[STDOUT_FILENO]->count++;
     task->files[STDERR_FILENO]->count++;
 
+    // 初始化信号
+    task->signal = 0;
+    task->blocked = 0;
+    for (size_t i = 0; i < MAXSIG; i++)
+    {
+        sigaction_t *action = &task->actions[i];
+        action->flags = 0;
+        action->mask = 0;
+        action->handler = SIG_DFL;
+        action->restorer = NULL;
+    }
+
     task->magic = ONIX_MAGIC;
     return task;
 }
@@ -409,6 +433,52 @@ pid_t task_fork()
     return child->pid;
 }
 
+// 如果进程是会话首领则向会话中所有进程发送信号 SIGHUP
+static void task_kill_session(task_t *task)
+{
+    if (!task_leader(task))
+        return;
+
+    for (size_t i = 0; i < TASK_NR; i++)
+    {
+        task_t *child = task_table[i];
+        if (!child)
+            continue;
+        if (task == child || task->sid != child->sid)
+            continue;
+        child->signal |= SIGMASK(SIGHUP);
+    }
+}
+
+// 释放 TTY 设备
+static void task_free_tty(task_t *task)
+{
+    if (task_leader(task) && task->tty > 0)
+    {
+        device_t *device = device_get(task->tty);
+        tty_t *tty = (tty_t *)device->ptr;
+        tty->pgid = 0;
+    }
+}
+
+// 子进程退出，通知父进程
+static void task_tell_father(task_t *task)
+{
+    if (!task->ppid)
+        return;
+    for (size_t i = 0; i < TASK_NR; i++)
+    {
+        task_t *parent = task_table[i];
+        if (!parent)
+            continue;
+        if (parent->pid != task->ppid)
+            continue;
+        parent->signal |= SIGMASK(SIGCHLD);
+        return;
+    }
+    panic("No Parent found!!!");
+}
+
 void task_exit(int status)
 {
     task_t *task = running_task();
@@ -419,18 +489,9 @@ void task_exit(int status)
     task->state = TASK_DIED;
     task->status = status;
 
-    if (task_leader(task))
-    {
-        // TODO
-    }
-
-    // 释放tty设备
-    if (task_leader(task) && task->tty > 0)
-    {
-        device_t *device = device_get(task->tty);
-        tty_t *tty = (tty_t *)device->ptr;
-        tty->pgid = 0;
-    }
+    task_kill_session(task);
+    task_tell_father(task);
+    task_free_tty(task);
 
     timer_remove(task);
 
@@ -474,9 +535,9 @@ void task_exit(int status)
     schedule();
 }
 
+// 如果pid=-1就wait任何一个子进程，如果是特定的pid就wait特定的pid
 pid_t task_waitpid(pid_t pid, int32 *status)
 {
-    // 如果pid=-1就wait任何一个子进程，如果是特定的pid就wait特定的pid
     task_t *task = running_task();
     task_t *child = NULL;
 

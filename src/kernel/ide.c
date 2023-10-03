@@ -1,6 +1,5 @@
 #include <onix/ide.h>
 #include <onix/io.h>
-#include <onix/printk.h>
 #include <onix/stdio.h>
 #include <onix/memory.h>
 #include <onix/interrupt.h>

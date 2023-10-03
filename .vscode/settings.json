@@ -17,6 +17,9 @@
         "device.h": "c",
         "io.h": "c",
         "task.h": "c",
-        "timer.h": "c"
+        "timer.h": "c",
+        "assert.h": "c",
+        "memory.h": "c",
+        "signal.h": "c"
     }
 }

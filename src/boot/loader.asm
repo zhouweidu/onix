@@ -85,7 +85,7 @@ protect_mode:
 
     mov edi, 0x10000; 读取的目标内存
     mov ecx, 10; 起始扇区
-    mov bl, 200; 扇区数量
+    mov bl, 254; 扇区数量
 
     call read_disk
     mov eax, 0x20220205 ;内核魔数

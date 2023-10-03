@@ -8,9 +8,9 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	yes | bximage -hd=16M -mode=create -sectsize=512 -q $@
 	dd if=$(BUILD)/boot/boot.bin of=$@ bs=512 count=1 conv=notrunc
 	dd if=$(BUILD)/boot/loader.bin of=$@ bs=512 count=4 seek=2 conv=notrunc
-# 测试system.bin是否小于100K，否则就要修改下面的count
-	test -n "$$(find $(BUILD)/system.bin -size -100k)" 
-	dd if=$(BUILD)/system.bin of=$@ bs=512 count=200 seek=10 conv=notrunc
+# 测试system.bin是否小于100K，否则就要修改下面的count，还有loader里面的内容
+	test -n "$$(find $(BUILD)/system.bin -size -127k)" 
+	dd if=$(BUILD)/system.bin of=$@ bs=512 count=254 seek=10 conv=notrunc
 	sfdisk $@ < $(SRC)/utils/master.sfdisk
 # 挂载设备
 	sudo losetup /dev/loop22 --partscan $@

@@ -5,6 +5,8 @@
 #include <onix/assert.h>
 #include <onix/fs.h>
 #include <onix/time.h>
+#include <onix/tty.h>
+#include <onix/signal.h>
 
 #define MAX_CMD_LEN 256
 #define MAX_ARG_NR 16
@@ -35,6 +37,9 @@ static char *onix_logo[] = {
     "\033[0m\t\t\t      \033[34m/ /_/ \033[32m/ _ \\\033[35m/ /\033[33m\\ \\ / \n\0",
     "\033[0m\t\t\t      \033[34m\\____\033[32m/_//_\033[35m/_/\033[33m/_\\_\\  \n\0",
 };
+
+// 记录有没有按下ctrl + c
+static bool interrupt = false;
 
 static void strftime(time_t stamp, char *buf)
 {
@@ -307,7 +312,13 @@ pid_t builtin_command(char *filename, char *argv[], fd_t infd, fd_t outfd, fd_t 
     }
 
     setpgid(0, *pgid);
+    // 父进程只有在第一次fork的时候这里*pgid是0，其他情况下不会是0，看fork的过程就会明白
+    if (*pgid == 0)
+    {
+        ioctl(STDIN_FILENO, TIOCSPGRP, getpid());
+    }
 
+    signal(SIGINT, (int)SIG_DFL);
     // execve函数不会返回，否则出错
     int i = execve(filename, argv, envp);
     exit(i);
@@ -368,11 +379,16 @@ void builtin_exec(int argc, char *argv[])
     int pid = builtin_command(name, bargv, infd, dupfd[1], dupfd[2], &pgid);
 
     // 等待所有子进程运行结束
-    for (size_t i = 0; i <= count; i++)
+    for (size_t i = 0; i <= count;)
     {
         pid_t child = waitpid(-1, &status);
+        if (child > 0)
+        {
+            i++;
+        }
         // printf("child %d exit\n", child);
     }
+    ioctl(STDIN_FILENO, TIOCSPGRP, getpid());
 }
 
 static void execute(int argc, char *argv[])
@@ -534,9 +550,22 @@ static int cmd_parse(char *cmd, char *argv[])
     return argc;
 }
 
+static int signal_handler(int sig)
+{
+    // printf("pid %d signal %d happened\n", getpid(), sig);
+    signal(SIGINT, (int)signal_handler);
+    interrupt = true;
+}
+
 int main()
 {
+    // 注册信号 CTRL + C
+    signal(SIGINT, (int)signal_handler);
+
+    // 新建会话
     setsid();
+    // 设置 TTY 进程组为 osh
+    ioctl(STDIN_FILENO, TIOCSPGRP, getpid());
 
     memset(cmd, 0, sizeof(cmd));
     memset(cwd, 0, sizeof(cwd));
@@ -547,6 +576,13 @@ int main()
     {
         print_prompt();
         readline(cmd, sizeof(cmd));
+        if (interrupt)
+        {
+            // 如果按下了 CTRL+c，则重新读取命令
+            interrupt = false;
+            continue;
+        }
+
         if (cmd[0] == 0)
         {
             continue;

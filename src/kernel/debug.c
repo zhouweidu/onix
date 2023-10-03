@@ -1,7 +1,5 @@
-#include <onix/debug.h>
 #include <onix/stdarg.h>
 #include <onix/stdio.h>
-#include <onix/printk.h>
 #include <onix/device.h>
 
 static char buf[1024];
