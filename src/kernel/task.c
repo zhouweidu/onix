@@ -130,7 +130,7 @@ bool _inline task_leader(task_t *task)
 }
 
 // 任务阻塞
-int task_block(task_t *task, list_t *blist, task_state_t state, int timeout_ms)
+err_t task_block(task_t *task, list_t *blist, task_state_t state, int timeout_ms)
 {
     assert(!get_interrupt_state());
     assert(task->node.next == NULL);
@@ -163,9 +163,12 @@ int task_block(task_t *task, list_t *blist, task_state_t state, int timeout_ms)
 void task_unblock(task_t *task, int reason)
 {
     assert(!get_interrupt_state());
-
-    list_remove(&task->node);
-
+    //sleep和发送信号都会unblock，所以要判断一下
+    if (task->node.next)
+    {
+        list_remove(&task->node);
+    }
+    
     assert(task->node.next == NULL);
     assert(task->node.prev == NULL);
 
@@ -594,7 +597,6 @@ static void task_setup()
 
 extern void idle_thread();
 extern void init_thread();
-extern void test_thread();
 
 void task_init()
 {
@@ -603,5 +605,4 @@ void task_init()
     task_setup();
     idle_task = task_create(idle_thread, "idle", 1, KERNEL_USER);
     task_create(init_thread, "init", 5, NORMAL_USER);
-    task_create(test_thread, "test", 5, KERNEL_USER);
 }

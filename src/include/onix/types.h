@@ -3,9 +3,9 @@
 
 #include <onix/onix.h>
 
-#define EOF -1 //end of file
-#define NULL ((void *)0) //空指针
-#define EOS '\0' //end of string
+#define EOF -1           // end of file
+#define NULL ((void *)0) // 空指针
+#define EOS '\0'         // end of string
 
 #define CONCAT(x, y) x##y
 #define RESERVED_TOKEN(x, y) CONCAT(x, y)
@@ -24,7 +24,7 @@
 #define noreturn __attribute__((__noreturn__))
 
 #define _packed __attribute__((packed))
-//用于省略函数的栈帧
+// 用于省略函数的栈帧
 #define _ofp __attribute__((optimize("omit-frame-pointer")))
 #define _inline __attribute__((always_inline)) inline
 
@@ -56,5 +56,7 @@ typedef enum std_fd_t
     STDERR_FILENO,
 } std_fd_t;
 
-typedef int32 off_t; //文件偏移
+typedef int32 off_t; // 文件偏移
+
+typedef int err_t; // 错误类型
 #endif

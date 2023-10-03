@@ -26,6 +26,7 @@ typedef enum syscall_t
     SYS_NR_GETPID = 20,
     SYS_NR_MOUNT = 21,
     SYS_NR_UMOUNT = 22,
+    SYS_NR_ALARM = 27,
     SYS_NR_FSTAT = 28,
     SYS_NR_STTY = 31,
     SYS_NR_GTTY = 32,
@@ -162,5 +163,8 @@ int ioctl(fd_t fd, int cmd, int args);
 
 // 发送信号
 int kill(pid_t pid, int signal);
+
+// 设置闹钟
+int alarm(int sec);
 
 #endif

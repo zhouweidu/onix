@@ -131,7 +131,7 @@ static void ide_handler(int vector)
     }
 }
 
-static u32 ide_error(ide_ctrl_t *ctrl)
+static void ide_error(ide_ctrl_t *ctrl)
 {
     u8 error = inb(ctrl->iobase + IDE_ERR);
     if (error & IDE_ER_BBK)
@@ -267,11 +267,9 @@ int ide_pio_read(ide_disk_t *disk, void *buf, u8 count, idx_t lba)
     for (size_t i = 0; i < count; i++)
     {
         task_t *task = running_task();
-        if (task->state == TASK_RUNNING)
-        {
-            ctrl->waiter = task;
-            task_block(task, NULL, TASK_BLOCKED, TIMELESS);
-        }
+        ctrl->waiter = task;
+        assert(task_block(task, NULL, TASK_BLOCKED, TIMELESS) == EOK);
+
         ide_busy_wait(ctrl, IDE_SR_DRQ);
         u32 offset = ((u32)buf + i * SECTOR_SIZE);
         ide_pio_read_sector(disk, (u16 *)offset);
@@ -311,11 +309,9 @@ int ide_pio_write(ide_disk_t *disk, void *buf, u8 count, idx_t lba)
         ide_pio_write_sector(disk, (u16 *)offset);
 
         task_t *task = running_task();
-        if (task->state == TASK_RUNNING)
-        {
-            ctrl->waiter = task;
-            task_block(task, NULL, TASK_BLOCKED, TIMELESS);
-        }
+        ctrl->waiter = task;
+        assert(task_block(task, NULL, TASK_BLOCKED, TIMELESS) == EOK);
+
         ide_busy_wait(ctrl, IDE_SR_NULL);
     }
 
@@ -541,12 +537,17 @@ static void ide_install()
 void ide_init()
 {
     LOGK("ide init...\n");
-    ide_ctrl_init();
-    ide_install();
+
     // 注册硬盘中断，并打开屏蔽字
     set_interrupt_handler(IRQ_HARDDISK, ide_handler);
     set_interrupt_handler(IRQ_HARDDISK2, ide_handler);
     set_interrupt_mask(IRQ_HARDDISK, true);
     set_interrupt_mask(IRQ_HARDDISK2, true);
     set_interrupt_mask(IRQ_CASCADE, true);
+    
+    // 调用了ide_part_init，ide_part_init里面会调用ide_pio_read读取主引导扇区，
+    // 因为是异步读取，所以一定要在初始化中断后再调用
+    ide_ctrl_init();
+
+    ide_install(); // 安装设备
 }
