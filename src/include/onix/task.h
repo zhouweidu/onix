@@ -25,6 +25,12 @@ typedef enum task_state_t
     TASK_DIED,     // 死亡
 } task_state_t;
 
+typedef enum task_flag_t
+{
+    TASK_FPU_USED = 1,
+    TASK_FPU_ENABLED = 2,
+} task_flag_t;
+
 // PCB
 typedef struct task_t
 {
@@ -60,6 +66,8 @@ typedef struct task_t
     u32 blocked;                        // 进程信号屏蔽位图
     struct timer_t *alarm;              // 闹钟定时器
     sigaction_t actions[MAXSIG];        // 信号处理函数
+    struct fpu_t *fpu;                  // fpu 指针
+    u32 flags;                          // 特殊标记
     u32 magic;                          // 内核魔数，用于检测栈溢出
 } task_t;
 

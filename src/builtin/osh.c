@@ -93,6 +93,7 @@ void builtin_logo()
 
 void builtin_test(int argc, char *argv[])
 {
+    test();
 }
 
 void builtin_pwd()
@@ -557,12 +558,14 @@ static int signal_handler(int sig)
     interrupt = true;
 }
 
-//进程task从0开始，虚拟设备device的设备号从1开始
-// idle进程是0号进程，init进程是1号进程
-// 这个进程不是init进程，1号init进程fork出这个2号进程然后waitpid
-// 查看init_user_thread函数
+// 进程task从0开始，虚拟设备device的设备号从1开始
+//  idle进程是0号进程，init进程是1号进程
+//  这个进程不是init进程，1号init进程fork出这个2号进程然后waitpid
+//  查看init_user_thread函数
 int main()
 {
+    // 方便调试
+    builtin_test(0, NULL);
     // 注册信号 CTRL + C
     signal(SIGINT, (int)signal_handler);
 

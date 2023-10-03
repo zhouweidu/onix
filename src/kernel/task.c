@@ -14,6 +14,7 @@
 #include <onix/timer.h>
 #include <onix/device.h>
 #include <onix/tty.h>
+#include <onix/fpu.h>
 
 extern u32 volatile jiffies;
 extern u32 jiffy;
@@ -163,12 +164,12 @@ err_t task_block(task_t *task, list_t *blist, task_state_t state, int timeout_ms
 void task_unblock(task_t *task, int reason)
 {
     assert(!get_interrupt_state());
-    //sleep和发送信号都会unblock，所以要判断一下
+    // sleep和发送信号都会unblock，所以要判断一下
     if (task->node.next)
     {
         list_remove(&task->node);
     }
-    
+
     assert(task->node.next == NULL);
     assert(task->node.prev == NULL);
 
@@ -230,6 +231,7 @@ void schedule()
     if (next == current)
         return;
 
+    fpu_disable(current);
     task_activate(next);
     task_switch(next);
 }
@@ -406,6 +408,12 @@ pid_t task_fork()
     memcpy(buf, task->vmap->bits, PAGE_SIZE);
     child->vmap->bits = buf;
 
+    if (task->fpu)
+    {
+        child->fpu = kmalloc(sizeof(fpu_t));
+        memcpy(child->fpu, task->fpu, sizeof(fpu_t));
+    }
+
     // 拷贝页目录
     child->pde = (u32)copy_pde();
 
@@ -502,6 +510,13 @@ void task_exit(int status)
 
     free_kpage((u32)task->vmap->bits, 1);
     kfree(task->vmap);
+
+    if (task->fpu)
+    {
+        kfree(task->fpu);
+        task->fpu = NULL;
+        task->flags = 0;
+    }
 
     free_kpage((u32)task->pwd, 1);
     iput(task->ipwd);

@@ -41,6 +41,7 @@ $(BUILD)/lib/libc.o: $(BUILD)/lib/crt.o \
 	$(BUILD)/lib/assert.o \
 	$(BUILD)/lib/time.o \
 	$(BUILD)/lib/restorer.o \
+	$(BUILD)/lib/math.o \
 
 	ld -m elf_i386 -r $^ -o $@
 
@@ -56,6 +57,7 @@ BUILTIN_APPS := \
 	$(BUILD)/builtin/err.out \
 	$(BUILD)/builtin/count.out \
 	$(BUILD)/builtin/alarm.out \
+	$(BUILD)/builtin/float.out \
 
 $(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o\
 	$(BUILD)/lib/libc.o\
@@ -96,6 +98,9 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/execve.o \
 	$(BUILD)/kernel/signal.o \
 	$(BUILD)/kernel/alarm.o \
+	$(BUILD)/kernel/cpu.o \
+	$(BUILD)/kernel/test.o \
+	$(BUILD)/kernel/fpu.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \
@@ -113,6 +118,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/stdlib.o \
 	$(BUILD)/lib/syscall.o \
 	$(BUILD)/lib/printf.o \
+	$(BUILD)/lib/math.o \
 	$(BUILD)/builtin/osh.o \
 	$(BUILD)/lib/restorer.o \
 

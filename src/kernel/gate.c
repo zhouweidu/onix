@@ -3,8 +3,6 @@
 #include <onix/debug.h>
 #include <onix/syscall.h>
 #include <onix/task.h>
-#include <onix/fs.h>
-#include <onix/device.h>
 
 #define SYSCALL_SIZE 256
 
@@ -23,11 +21,7 @@ static void sys_default()
     panic("syscall not implemented!!!");
 }
 
-static u32 sys_test()
-{
-    // LOGK("sys_test called!!!\n");
-    return 255;
-}
+extern err_t sys_test();
 
 extern int sys_execve(char *filename, char *argv[], char *envp[]);
 extern int sys_kill();
@@ -39,8 +33,8 @@ extern int sys_pipe(fd_t pipefd[2]);
 
 extern int sys_read(fd_t fd, char *buf, int count);
 extern int sys_write(fd_t fd, char *buf, int count);
-extern int sys_lseek(fd_t fd, off_t offset, whence_t whence);
-extern int sys_readdir(fd_t fd, dirent_t *dir, u32 count);
+extern int sys_lseek();
+extern int sys_readdir();
 
 extern fd_t sys_open(char *filename, int flags, int mode);
 extern fd_t sys_creat(char *filename, int mode);
