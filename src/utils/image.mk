@@ -1,9 +1,19 @@
+MUSIC:= ./utils/deer.mp3
+
+$(BUILD)/mono.wav: $(MUSIC)
+	ffmpeg -i $< -ac 1 -ar 44100 -acodec pcm_u8 -y $@
+
+$(BUILD)/stereo.wav: $(MUSIC)
+	ffmpeg -i $< -ac 2 -ar 44100 -acodec pcm_s16le -y $@
+
 $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	$(BUILD)/boot/loader.bin\
 	$(BUILD)/system.bin\
 	$(BUILD)/system.map\
 	$(SRC)/utils/master.sfdisk\
 	$(BUILTIN_APPS)\
+	$(BUILD)/mono.wav\
+	$(BUILD)/stereo.wav\
 	
 	yes | bximage -hd=16M -mode=create -sectsize=512 -q $@
 	dd if=$(BUILD)/boot/boot.bin of=$@ bs=512 count=1 conv=notrunc
@@ -31,6 +41,11 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 # 创建文件
 	echo "master / direcotry file..." > /mnt/hello.txt
 
+# 拷贝音频
+	mkdir -p /mnt/data
+	cp $(BUILD)/mono.wav /mnt/data
+	cp $(BUILD)/stereo.wav /mnt/data
+
 # 拷贝程序
 	for app in $(BUILTIN_APPS); \
 	do \
@@ -42,6 +57,11 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 
 # 卸载设备
 	sudo losetup -d /dev/loop22
+
+$(BUILD)/floppya.img:
+
+# 创建一个 1.44M 的软盘镜像
+	yes | bximage -q -fd=1.44M -mode=create -sectsize=512 -imgmode=flat $@
 
 $(BUILD)/slave.img: $(SRC)/utils/slave.sfdisk
 	yes | bximage -hd=32M -mode=create -sectsize=512 -q $@
@@ -90,6 +110,7 @@ umount1: /dev/loop23
 	-sudo losetup -d $<
 
 IMAGES:= $(BUILD)/master.img \
-	$(BUILD)/slave.img
+	$(BUILD)/slave.img \
+	$(BUILD)/floppya.img
 
 image: $(IMAGES)

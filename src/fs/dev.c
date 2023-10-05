@@ -4,6 +4,7 @@
 #include <onix/stdio.h>
 #include <onix/assert.h>
 #include <onix/fs.h>
+#include <onix/errno.h>
 
 extern file_t file_table[];
 
@@ -68,6 +69,17 @@ void dev_init()
 
     for (size_t i = 0; true; i++)
     {
+        device = device_find(DEV_FLOPPY, i);
+        if (!device)
+        {
+            break;
+        }
+        sprintf(name, "/dev/%s", device->name);
+        assert(mknod(name, IFBLK | 0600, device->dev) == EOK);
+    }
+    
+    for (size_t i = 0; true; i++)
+    {
         device = device_find(DEV_SERIAL, i);
         if (!device)
         {
@@ -75,6 +87,17 @@ void dev_init()
         }
         sprintf(name, "/dev/%s", device->name);
         mknod(name, IFCHR | 0600, device->dev);
+    }
+
+    for (size_t i = 0; true; i++)
+    {
+        device = device_find(DEV_SB16, i);
+        if (!device)
+        {
+            break;
+        }
+        sprintf(name, "/dev/%s", device->name);
+        assert(mknod(name, IFCHR | 0200, device->dev) == EOK);
     }
 
     link("/dev/tty", "/dev/stdout");

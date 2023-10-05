@@ -680,7 +680,7 @@ void page_fault(
 {
     assert(vector == 0xe);
     u32 vaddr = get_cr2();
-    LOGK("fault address 0x%p\n", vaddr);
+    LOGK("fault address 0x%p eip 0x%p\n", vaddr, eip);
 
     page_error_code_t *code = (page_error_code_t *)&error;
     task_t *task = running_task();
@@ -703,7 +703,7 @@ void page_fault(
         assert(!entry->shared);   // 共享内存页，不应该引发缺页
         assert(!entry->readonly); // 只读内存页，不应该被写
 
-        copy_on_write(vaddr,3);
+        copy_on_write(vaddr, 3);
         return;
     }
 
