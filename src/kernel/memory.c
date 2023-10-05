@@ -398,6 +398,38 @@ void unlink_page(u32 vaddr)
     flush_tlb(vaddr);
 }
 
+void map_page(u32 vaddr, u32 paddr)
+{
+    ASSERT_PAGE(vaddr);
+    ASSERT_PAGE(paddr);
+
+    page_entry_t *entry = get_entry(vaddr, true);
+
+    if (entry->present)
+    {
+        return;
+    }
+
+    if (!paddr)
+    {
+        paddr = get_page();
+    }
+
+    entry_init(entry, IDX(paddr));
+    flush_tlb(vaddr);
+}
+
+void map_area(u32 paddr, u32 size)
+{
+    ASSERT_PAGE(paddr);
+    u32 page_count = div_round_up(size, PAGE_SIZE);
+    for (size_t i = 0; i < page_count; i++)
+    {
+        map_page(paddr + i * PAGE_SIZE, paddr + i * PAGE_SIZE);
+    }
+    LOGK("MAP memory 0x%p size 0x%X\n", paddr, size);
+}
+
 // 拷贝一页，返回拷贝后的物理地址
 static u32 copy_page(void *page)
 {

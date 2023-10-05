@@ -19,8 +19,8 @@ $(BUILD)/master.img: $(BUILD)/boot/boot.bin \
 	dd if=$(BUILD)/boot/boot.bin of=$@ bs=512 count=1 conv=notrunc
 	dd if=$(BUILD)/boot/loader.bin of=$@ bs=512 count=4 seek=2 conv=notrunc
 # 测试system.bin是否小于100K，否则就要修改下面的count，还有loader里面的内容
-	test -n "$$(find $(BUILD)/system.bin -size -127k)" 
-	dd if=$(BUILD)/system.bin of=$@ bs=512 count=254 seek=10 conv=notrunc
+	test -n "$$(find $(BUILD)/system.bin -size -500k)" 
+	dd if=$(BUILD)/system.bin of=$@ bs=512 count=1000 seek=10 conv=notrunc
 	sfdisk $@ < $(SRC)/utils/master.sfdisk
 # 挂载设备
 	sudo losetup /dev/loop22 --partscan $@
