@@ -90,21 +90,22 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/ramdisk.o \
 	$(BUILD)/kernel/ide.o \
 	$(BUILD)/kernel/serial.o \
+	$(BUILD)/kernel/pci.o \
 	$(BUILD)/kernel/memory.o \
+	$(BUILD)/kernel/arena.o \
 	$(BUILD)/kernel/keyboard.o \
 	$(BUILD)/kernel/tty.o \
+	$(BUILD)/kernel/isa.o \
+	$(BUILD)/kernel/sb16.o \
+	$(BUILD)/kernel/floppy.o \
 	$(BUILD)/kernel/buffer.o \
-	$(BUILD)/kernel/arena.o \
 	$(BUILD)/kernel/system.o \
 	$(BUILD)/kernel/execve.o \
 	$(BUILD)/kernel/signal.o \
 	$(BUILD)/kernel/alarm.o \
 	$(BUILD)/kernel/cpu.o \
-	$(BUILD)/kernel/test.o \
 	$(BUILD)/kernel/fpu.o \
-	$(BUILD)/kernel/isa.o \
-	$(BUILD)/kernel/sb16.o \
-	$(BUILD)/kernel/floppy.o \
+	$(BUILD)/kernel/test.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \
