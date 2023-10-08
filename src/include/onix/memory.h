@@ -90,4 +90,8 @@ page_entry_t *copy_pde();
 void free_pde();
 
 int32 sys_brk(void *addr);
+
+// 获取虚拟地址 vaddr 对应的物理地址
+u32 get_paddr(u32 vaddr);
+
 #endif

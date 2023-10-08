@@ -147,7 +147,8 @@ err_t task_block(task_t *task, list_t *blist, task_state_t state, int timeout_ms
     list_push(blist, &task->node);
     if (timeout_ms > 0)
     {
-        timer_add(timeout_ms, NULL, NULL);
+        assert(task->timer == NULL);
+        task->timer = timer_add(timeout_ms, NULL, NULL);
     }
 
     task->state = state;
@@ -170,9 +171,19 @@ void task_unblock(task_t *task, int reason)
         list_remove(&task->node);
     }
 
+    if (task->timer)
+    {
+        if (!task->timer->active)
+        {
+            timer_put(task->timer);
+        }
+        task->timer = NULL;
+    }
+
     assert(task->node.next == NULL);
     assert(task->node.prev == NULL);
 
+    assert(task->state != TASK_RUNNING);
     task->status = reason;
     task->state = TASK_READY;
 }

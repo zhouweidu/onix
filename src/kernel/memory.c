@@ -295,6 +295,21 @@ page_entry_t *get_entry(u32 vaddr, bool create)
     return &pte[TIDX(vaddr)];
 }
 
+// 获取虚拟地址 vaddr 对应的物理地址
+u32 get_paddr(u32 vaddr)
+{
+    page_entry_t *pde = get_pde();
+    page_entry_t *entry = &pde[DIDX(vaddr)];
+    if (!entry->present)
+        return 0;
+
+    entry = get_entry(vaddr, false);
+    if (!entry->present)
+        return 0;
+
+    return PAGE(entry->index) | (vaddr & 0xfff);
+}
+
 // 刷新虚拟地址 vaddr 的 快表 TLB
 void flush_tlb(u32 vaddr)
 {
