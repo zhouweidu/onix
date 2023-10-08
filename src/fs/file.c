@@ -7,6 +7,7 @@
 
 #define FILE_NR 128
 
+// 系统打开文件表
 file_t file_table[FILE_NR];
 
 // 从文件表中获取一个空文件

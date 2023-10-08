@@ -303,11 +303,11 @@ int devmkfs(dev_t dev, u32 icount)
 
     // 初始化位图
     idx = balloc(dev);
-
+    // inode第0个直接被占用（不使用第0号inode），第一号inode为根目录
     idx = ialloc(dev);
     idx = ialloc(dev);
 
-    // 位图尾部置位
+    // 位图尾部置位 icount是inode数量
     int counts[] = {
         icount + 1,
         zcount,

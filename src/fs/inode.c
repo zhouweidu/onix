@@ -14,6 +14,7 @@
 
 #define INODE_NR 64
 
+// 主存活动inode表
 static inode_t inode_table[INODE_NR];
 
 // 申请一个 inode
