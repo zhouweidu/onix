@@ -1,7 +1,9 @@
 BUILD:=../build
 SRC:=.
 
-ENTRYPOINT:=0x10000
+MULTIBOOT2:= 0x10000
+ENTRYPOINT:=0x10040
+ONIX_VERSION:=1.0.0
 
 CFLAGS:= -m32
 CFLAGS+= -fno-builtin
@@ -13,7 +15,6 @@ CFLAGS+= -fno-stack-protector
 CFLAGS+= -DONIX
 CFLAGS+= -DONIX_DEBUG
 CFLAGS:=$(strip ${CFLAGS}) 
-
 
 DEBUG:= -g
 
@@ -68,6 +69,12 @@ $(BUILD)/builtin/%.out: $(BUILD)/builtin/%.o\
 	$(BUILD)/lib/libc.o\
 
 	ld -m elf_i386 -static $^ -o $@ -Ttext 0x1001000
+
+LDFLAGS:= -m elf_i386 \
+		-static \
+		-Ttext $(ENTRYPOINT)\
+		--section-start=.multiboot2=$(MULTIBOOT2)
+LDFLAGS:=$(strip ${LDFLAGS})
 
 $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/start.o \
@@ -132,7 +139,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/lib/restorer.o \
 
 	$(shell mkdir -p $(dir $@))
-	ld -m elf_i386 -static $^ -o $@ -Ttext $(ENTRYPOINT)
+	ld ${LDFLAGS} $^ -o $@ 
 
 $(BUILD)/system.bin: $(BUILD)/kernel.bin
 	objcopy -O binary $< $@
@@ -141,6 +148,7 @@ $(BUILD)/system.map: $(BUILD)/kernel.bin
 	nm $< | sort > $@
 
 include utils/image.mk
+include utils/cdrom.mk
 include utils/cmd.mk
 
 .PHONY: clean

@@ -9,6 +9,7 @@
 #include <onix/syscall.h>
 #include <onix/fs.h>
 #include <onix/printk.h>
+#include <onix/multiboot2.h>
 
 #ifdef ONIX_DEBUG
 #define USER_MEMORY true
@@ -72,6 +73,35 @@ void memory_init(u32 magic, u32 addr)
                 memory_base = (u32)ptr->base;
                 memory_size = (u32)ptr->size;
             }
+        }
+    }
+    else if (magic == MULTIBOOT2_MAGIC)
+    {
+        u32 size = *(unsigned int *)addr;
+        multi_tag_t *tag = (multi_tag_t *)(addr + 8);
+
+        LOGK("Announced mbi size 0x%x\n", size);
+        while (tag->type != MULTIBOOT_TAG_TYPE_END)
+        {
+            if (tag->type == MULTIBOOT_TAG_TYPE_MMAP)
+                break;
+            // 下一个 tag 对齐到了 8 字节
+            tag = (multi_tag_t *)((u32)tag + ((tag->size + 7) & ~7));
+        }
+
+        multi_tag_mmap_t *mtag = (multi_tag_mmap_t *)tag;
+        multi_mmap_entry_t *entry = mtag->entries;
+        while ((u32)entry < (u32)tag + tag->size)
+        {
+            LOGK("Memory base 0x%p size 0x%p type %d\n",
+                 (u32)entry->addr, (u32)entry->len, (u32)entry->type);
+            count++;
+            if (entry->type == ZONE_VALID && entry->len > memory_size)
+            {
+                memory_base = (u32)entry->addr;
+                memory_size = (u32)entry->len;
+            }
+            entry = (multi_mmap_entry_t *)((u32)entry + mtag->entry_size);
         }
     }
     else
