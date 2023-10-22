@@ -565,7 +565,7 @@ static int signal_handler(int sig)
 int main()
 {
     // 方便调试
-    builtin_test(0, NULL);
+    // builtin_test(0, NULL);
     // 注册信号 CTRL + C
     signal(SIGINT, (int)signal_handler);
 

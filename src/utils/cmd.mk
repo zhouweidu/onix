@@ -16,6 +16,7 @@ QEMU+= -chardev stdio,mux=on,id=com1 # 字符设备 1
 QEMU+= -serial chardev:com1 # 串口 1
 # QEMU+= -serial chardev:com2 # 串口 2
 QEMU+= -netdev tap,id=eth0,ifname=tap0,script=no,downscript=no # 网络设备
+QEMU+= -device e1000,netdev=eth0,mac=5A:5A:5A:5A:5A:33 # 网卡 e1000
 
 QEMU_DISK := -drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw # 主硬盘
 QEMU_DISK += -drive file=$(BUILD)/slave.img,if=ide,index=1,media=disk,format=raw # 从硬盘

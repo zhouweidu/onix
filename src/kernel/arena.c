@@ -50,8 +50,6 @@ void *kmalloc(size_t size)
         u32 asize = size + sizeof(arena_t);
         u32 count = div_round_up(asize, PAGE_SIZE);
 
-        desc->page_count++;
-
         arena = (arena_t *)alloc_kpage(count);
         memset(arena, 0, count * PAGE_SIZE);
         arena->large = true;
@@ -76,6 +74,8 @@ void *kmalloc(size_t size)
     {
         arena = (arena_t *)alloc_kpage(1);
         memset(arena, 0, PAGE_SIZE);
+
+        desc->page_count++;
 
         arena->desc = desc;
         arena->large = false;

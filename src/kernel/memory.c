@@ -500,7 +500,7 @@ page_entry_t *copy_pde()
     page_entry_t *dentry = NULL;
     page_entry_t *entry = NULL;
 
-    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < 1023; didx++)
+    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < USER_STACK_TOP>>22; didx++)
     {
         dentry = &pde[didx];
         if (!dentry->present)
@@ -556,7 +556,7 @@ void free_pde()
 
     page_entry_t *pde = get_pde();
 
-    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < 1023; didx++)
+    for (size_t didx = (sizeof(KERNEL_PAGE_TABLE) / 4); didx < USER_STACK_TOP>>22; didx++)
     {
         page_entry_t *dentry = &pde[didx];
         if (!dentry->present)

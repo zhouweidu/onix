@@ -80,6 +80,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/start.o \
 	$(BUILD)/kernel/main.o \
 	$(BUILD)/kernel/io.o \
+	$(BUILD)/kernel/mio.o \
 	$(BUILD)/kernel/device.o \
 	$(BUILD)/kernel/console.o \
 	$(BUILD)/kernel/printk.o \
@@ -117,6 +118,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/kernel/cpu.o \
 	$(BUILD)/kernel/fpu.o \
 	$(BUILD)/kernel/test.o \
+	$(BUILD)/kernel/e1000.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \
