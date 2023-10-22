@@ -15,6 +15,7 @@ QEMU+= -chardev stdio,mux=on,id=com1 # 字符设备 1
 # QEMU+= -chardev udp,id=com2,port=7777,ipv4=on # 字符设备 2
 QEMU+= -serial chardev:com1 # 串口 1
 # QEMU+= -serial chardev:com2 # 串口 2
+QEMU+= -netdev tap,id=eth0,ifname=tap0,script=no,downscript=no # 网络设备
 
 QEMU_DISK := -drive file=$(BUILD)/master.img,if=ide,index=0,media=disk,format=raw # 主硬盘
 QEMU_DISK += -drive file=$(BUILD)/slave.img,if=ide,index=1,media=disk,format=raw # 从硬盘
@@ -24,11 +25,11 @@ QEMU_DISK_BOOT:= -boot c
 QEMU_DEBUG:= -s -S
 
 .PHONY: qemu
-qemu: $(IMAGES)
+qemu: $(IMAGES) $(BR0) $(TAPS)
 	$(QEMU) $(QEMU_DISK) $(QEMU_DISK_BOOT)
 
 .PHONY: qemug
-qemug: $(IMAGES)
+qemug: $(IMAGES) $(BR0) $(TAPS)
 	$(QEMU) $(QEMU_DISK) $(QEMU_DISK_BOOT) $(QEMU_DEBUG)
 
 $(BUILD)/master.vmdk: $(BUILD)/master.img
