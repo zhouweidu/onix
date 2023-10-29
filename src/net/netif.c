@@ -97,7 +97,7 @@ static void neti_thread()
                      pbuf->eth->src,
                      pbuf->eth->dst,
                      pbuf->length);
-
+                eth_input(netif, pbuf);
                 pbuf_put(pbuf);
                 count++;
             }

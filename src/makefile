@@ -122,6 +122,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/net/pbuf.o \
 	$(BUILD)/net/addr.o \
 	$(BUILD)/net/netif.o \
+	$(BUILD)/net/eth.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \
