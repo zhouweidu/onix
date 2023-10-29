@@ -247,7 +247,7 @@ void schedule()
     task_switch(next);
 }
 
-static task_t *task_create(target_t target, const char *name, u32 priority, u32 uid)
+task_t *task_create(target_t target, const char *name, u32 priority, u32 uid)
 {
     task_t *task = get_free_task();
 

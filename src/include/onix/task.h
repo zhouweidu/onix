@@ -139,4 +139,6 @@ void task_put_fd(task_t *task, fd_t fd);
 // 进程是不是会话的首领
 bool task_leader(task_t *task);
 
+task_t *task_create(target_t target, const char *name, u32 priority, u32 uid);
+
 #endif

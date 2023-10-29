@@ -6,13 +6,11 @@
 #include <onix/string.h>
 #include <onix/net.h>
 
-extern void send_packet();
-
 err_t sys_test()
 {
     // 发送测试数据包
-
     pbuf_t *pbuf = pbuf_get();
+    netif_t *netif = netif_get();
 
     memcpy(pbuf->eth->dst, "\xff\xff\xff\xff\xff\x00", 6);
     memcpy(pbuf->eth->src, "\x5a\xab\xcc\x5a\x5a\x33", 6);
@@ -21,6 +19,6 @@ err_t sys_test()
     int len = 1500;
     pbuf->length = len + sizeof(eth_t);
     memset(pbuf->eth->payload, 'A', len);
-    send_packet(pbuf);
+    netif_output(netif, pbuf);
     return EOK;
 }
