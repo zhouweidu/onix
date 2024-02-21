@@ -21,16 +21,19 @@ logging.basicConfig(
 
 logger = logging.getLogger("net")
 
-
+# tap1 用于调试
 rmac = '5a:5a:5a:5a:5a:44'
 raddr = '192.168.6.44'
 
+# tap0 qemu
 lmac = '5a:5a:5a:5a:5a:33'
 laddr = '192.168.6.33'
 
+# br0
 bmac = '5a:5a:5a:5a:5a:22'
 baddr = '192.168.6.22'
 
+# ubantu
 hmac = '00:0c:29:a1:e7:ae'
 haddr = '192.168.6.128'
 
