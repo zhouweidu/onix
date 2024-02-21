@@ -16,6 +16,7 @@ extern void pci_init();
 extern void pbuf_init();
 extern void netif_init();
 extern void eth_init();
+extern void arp_init();
 
 void kernel_init()
 {
@@ -36,6 +37,7 @@ void kernel_init()
     pbuf_init();
     netif_init();
     eth_init();
+    arp_init();
 
     set_interrupt_state(true);
 }
