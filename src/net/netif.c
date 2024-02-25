@@ -47,6 +47,21 @@ netif_t *netif_get()
     return netif;
 }
 
+netif_t *netif_route(ip_addr_t addr)
+{
+    list_t *list = &netif_list;
+    for (list_node_t *ptr = list->head.next; ptr != &list->tail; ptr = ptr->next)
+    {
+        netif_t *netif = element_entry(netif_t, node, ptr);
+        if (ip_addr_maskcmp(addr, netif->ipaddr, netif->netmask) &&
+            !ip_addr_isany(netif->ipaddr))
+        {
+            return netif;
+        }
+    }
+    return netif_get(); // TODO route
+}
+
 // 移除虚拟网卡
 void netif_remove(netif_t *netif)
 {
@@ -92,11 +107,11 @@ static void neti_thread()
                 pbuf = element_entry(pbuf_t, node, list_popback(&netif->rx_pbuf_list));
                 assert(!pbuf->node.next && !pbuf->node.prev);
 
-                LOGK("ETH RECV [%04X]: %m -> %m %d\n",
-                     ntohs(pbuf->eth->type),
-                     pbuf->eth->src,
-                     pbuf->eth->dst,
-                     pbuf->length);
+                // LOGK("ETH RECV [%04X]: %m -> %m %d\n",
+                //      ntohs(pbuf->eth->type),
+                //      pbuf->eth->src,
+                //      pbuf->eth->dst,
+                //      pbuf->length);
                 eth_input(netif, pbuf);
                 pbuf_put(pbuf);
                 count++;

@@ -7,5 +7,7 @@
 #include <onix/net/netif.h>
 #include <onix/net/addr.h>
 #include <onix/net/arp.h>
+#include <onix/net/ip.h>
+#include <onix/net/chksum.h>
 
 #endif

@@ -22,6 +22,7 @@
         "memory.h": "c",
         "signal.h": "c",
         "cpu.h": "c",
-        "multiboot2.h": "c"
+        "multiboot2.h": "c",
+        "net.h": "c"
     }
 }
