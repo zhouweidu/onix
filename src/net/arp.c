@@ -120,8 +120,8 @@ static err_t arp_query(arp_entry_t *entry)
 
     eth_addr_copy(arp->hwdst, entry->hwaddr);
     ip_addr_copy(arp->ipdst, entry->ipaddr);
-    ip_addr_copy(arp->ipsrc, entry->netif->ipaddr);
     eth_addr_copy(arp->hwsrc, entry->netif->hwaddr);
+    ip_addr_copy(arp->ipsrc, entry->netif->ipaddr);
 
     eth_output(entry->netif, pbuf, entry->hwaddr, ETH_TYPE_ARP, sizeof(arp_t));
     return EOK;
@@ -202,9 +202,8 @@ err_t arp_input(netif_t *netif, pbuf_t *pbuf)
     case ARP_OP_REQUEST:
         return arp_reply(netif, pbuf);
     case ARP_OP_REPLY:
-        LOGK("arp reply %r -> %m\n", arp->ipsrc, arp->hwsrc);
-        break;
-        // return arp_refresh(netif, pbuf);
+        LOGK("ARP reply %r -> %m\n", arp->ipsrc, arp->hwsrc);
+        return arp_refresh(netif, pbuf);
     default:
         return -EPROTO;
     }
@@ -212,42 +211,42 @@ err_t arp_input(netif_t *netif, pbuf_t *pbuf)
 }
 
 // 发送数据包到对应的 IP 地址
-// err_t arp_eth_output(netif_t *netif, pbuf_t *pbuf, ip_addr_t addr, u16 type, u32 len)
-// {
-//     pbuf->eth->type = htons(type);
-//     eth_addr_copy(pbuf->eth->src, netif->hwaddr);
-//     pbuf->length = sizeof(eth_t) + len;
+err_t arp_eth_output(netif_t *netif, pbuf_t *pbuf, ip_addr_t addr, u16 type, u32 len)
+{
+    pbuf->eth->type = htons(type);
+    eth_addr_copy(pbuf->eth->src, netif->hwaddr);
+    pbuf->length = sizeof(eth_t) + len;
 
-//     if (netif->flags & NETIF_LOOPBACK)
-//     {
-//         eth_addr_copy(pbuf->eth->dst, "\x00\x00\x00\x00\x00\x00");
-//         netif_output(netif, pbuf);
-//         return EOK;
-//     }
+    // if (netif->flags & NETIF_LOOPBACK)
+    // {
+    //     eth_addr_copy(pbuf->eth->dst, "\x00\x00\x00\x00\x00\x00");
+    //     netif_output(netif, pbuf);
+    //     return EOK;
+    // }
 
-//     if (ip_addr_isown(addr))
-//     {
-//         eth_addr_copy(pbuf->eth->dst, netif->hwaddr);
-//         netif_input(netif, pbuf);
-//         return EOK;
-//     }
+    // if (ip_addr_isown(addr))
+    // {
+    //     eth_addr_copy(pbuf->eth->dst, netif->hwaddr);
+    //     netif_input(netif, pbuf);
+    //     return EOK;
+    // }
 
-//     arp_entry_t *entry = arp_lookup(netif, addr);
-//     if (!entry)
-//         return -EADDR;
+    arp_entry_t *entry = arp_lookup(netif, addr);
+    if (!entry)
+        return -EADDR;
 
-//     if (entry->expires > time())
-//     {
-//         entry->used += 1;
-//         eth_addr_copy(pbuf->eth->dst, entry->hwaddr);
-//         netif_output(netif, pbuf);
-//         return EOK;
-//     }
+    if (entry->expires > time())
+    {
+        entry->used += 1;
+        eth_addr_copy(pbuf->eth->dst, entry->hwaddr);
+        netif_output(netif, pbuf);
+        return EOK;
+    }
 
-//     list_push(&entry->pbuf_list, &pbuf->node);
-//     arp_query(entry);
-//     return EOK;
-// }
+    list_push(&entry->pbuf_list, &pbuf->node);
+    arp_query(entry);
+    return EOK;
+}
 
 // ARP 刷新线程
 static void arp_thread()
@@ -289,5 +288,7 @@ static void arp_thread()
 // 初始化 ARP 协议
 void arp_init()
 {
-    
+    LOGK("Address Resolution Protocol init...\n");
+    list_init(&arp_entry_list);
+    arp_task = task_create(arp_thread, "arp", 5, KERNEL_USER);
 }
