@@ -23,6 +23,7 @@
         "signal.h": "c",
         "cpu.h": "c",
         "multiboot2.h": "c",
-        "net.h": "c"
+        "net.h": "c",
+        "minix.h": "c"
     }
 }

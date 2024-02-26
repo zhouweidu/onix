@@ -9,5 +9,6 @@
 #include <onix/net/arp.h>
 #include <onix/net/ip.h>
 #include <onix/net/chksum.h>
+#include <onix/net/icmp.h>
 
 #endif

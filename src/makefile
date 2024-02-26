@@ -126,6 +126,7 @@ $(BUILD)/kernel.bin: \
 	$(BUILD)/net/arp.o \
 	$(BUILD)/net/chksum.o \
 	$(BUILD)/net/ip.o \
+	$(BUILD)/net/icmp.o \
 	$(BUILD)/fs/super.o \
 	$(BUILD)/fs/bmap.o \
 	$(BUILD)/fs/inode.o \

@@ -3,6 +3,7 @@
 
 #include <onix/net/types.h>
 #include <onix/net/eth.h>
+#include <onix/net/icmp.h>
 
 #define IP_VERSION_4 4
 #define IP_TTL 64
@@ -44,6 +45,8 @@ typedef struct ip_t
     union
     {
         u8 payload[0];       // 载荷
+        icmp_t icmp[0];      // ICMP 协议
+        icmp_echo_t echo[0]; // ICMP ECHO 协议
     };
 
 } _packed ip_t;
