@@ -15,6 +15,7 @@ extern void pci_init();
 
 extern void pbuf_init();
 extern void netif_init();
+extern void loopif_init();
 extern void eth_init();
 extern void arp_init();
 extern void ip_init();
@@ -38,6 +39,7 @@ void kernel_init()
 
     pbuf_init();
     netif_init();
+    loopif_init();
     eth_init();
     arp_init();
     ip_init();

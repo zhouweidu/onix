@@ -217,12 +217,12 @@ err_t arp_eth_output(netif_t *netif, pbuf_t *pbuf, ip_addr_t addr, u16 type, u32
     eth_addr_copy(pbuf->eth->src, netif->hwaddr);
     pbuf->length = sizeof(eth_t) + len;
 
-    // if (netif->flags & NETIF_LOOPBACK)
-    // {
-    //     eth_addr_copy(pbuf->eth->dst, "\x00\x00\x00\x00\x00\x00");
-    //     netif_output(netif, pbuf);
-    //     return EOK;
-    // }
+    if (netif->flags & NETIF_LOOPBACK)
+    {
+        eth_addr_copy(pbuf->eth->dst, "\x00\x00\x00\x00\x00\x00");
+        netif_output(netif, pbuf);
+        return EOK;
+    }
 
     // if (ip_addr_isown(addr))
     // {

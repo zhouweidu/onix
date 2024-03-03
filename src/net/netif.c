@@ -13,15 +13,26 @@ static list_t netif_list; // 虚拟网卡列表
 static task_t *neti_task; // 接收任务
 static task_t *neto_task; // 发送任务
 
-// 初始化虚拟网卡
-netif_t *netif_setup(void *nic, eth_addr_t hwaddr, void *output)
+netif_t *netif_create()
 {
     netif_t *netif = kmalloc(sizeof(netif_t));
-    sprintf(netif->name, "eth%d", list_size(&netif_list));
+    memset(netif, 0, sizeof(netif_t));
+    lock_init(&netif->rx_lock);
+    lock_init(&netif->tx_lock);
+
+    netif->index = list_size(&netif_list);
+    sprintf(netif->name, "eth%d", netif->index);
 
     list_push(&netif_list, &netif->node);
     list_init(&netif->rx_pbuf_list);
     list_init(&netif->tx_pbuf_list);
+    return netif;
+}
+
+// 初始化虚拟网卡
+netif_t *netif_setup(void *nic, eth_addr_t hwaddr, void *output)
+{
+    netif_t *netif = netif_create();
 
     eth_addr_copy(netif->hwaddr, hwaddr);
 
